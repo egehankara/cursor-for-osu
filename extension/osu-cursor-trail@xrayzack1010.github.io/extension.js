@@ -233,9 +233,9 @@ class Trail {
         this._current = null;
         try {
             const [, stateBytes] = GLib.file_get_contents(this._statePath);
-            const trail = JSON.parse(new TextDecoder().decode(stateBytes)).trail;
-            if (trail) {
-                this._applyTrail(trail);
+            const state = JSON.parse(new TextDecoder().decode(stateBytes));
+            if (state.trail && state.trail_enabled !== false) {
+                this._applyTrail(state.trail);
                 return;
             }
         } catch (error) {

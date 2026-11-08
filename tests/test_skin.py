@@ -1,4 +1,5 @@
 import io
+import json
 import struct
 import zipfile
 
@@ -182,3 +183,88 @@ def test_explains_a_missing_trail(tmp_path, desktop):
     blank = png(1, 1, (0, 0, 0, 0))
     gnome.apply_skin(osk(tmp_path, {"cursor.png": png(), "cursortrail.png": blank}), 1.0)
     assert "trail'i yok" in gnome.trail_problem()
+
+
+def exports(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    directory = tmp_path / "osu" / "exports"
+    directory.mkdir(parents=True)
+    return directory
+
+
+def test_exported_skins_skip_repeats_and_broken_files(tmp_path, monkeypatch):
+    directory = exports(tmp_path, monkeypatch)
+    trail = {"cursor.png": png(), "cursortrail.png": png(), "skin.ini": b"[General]\nName: B   skin\n"}
+    osk(directory, trail, "b.osk")
+    osk(directory, trail, "b (1).osk")
+    osk(directory, {"cursor.png": png(colour=(0, 255, 0, 255))}, "a.osk")
+    (directory / "broken.osk").write_bytes(b"not a zip")
+
+    skins = gnome.exported_skins()
+
+    assert [skin.name for skin in skins] == ["a", "B skin"]
+    assert [skin.has_trail for skin in skins] == [False, True]
+    assert Image.open(io.BytesIO(skins[0].preview_png)).size == (96, 96)
+
+
+def test_current_skin_key_matches_the_exported_skin(tmp_path, monkeypatch):
+    directory = exports(tmp_path, monkeypatch)
+    files = {"cursor.png": png()}
+    osk(directory, files, "a.osk")
+    gnome._keep_source(files, "kept")
+    assert gnome.current_skin_key() == gnome.exported_skins()[0].key
+
+
+def test_game_cursor_size_is_kept_in_range(tmp_path, monkeypatch):
+    write_game_ini(tmp_path, monkeypatch, "GameplayCursorSize = 9\n")
+    assert gnome.has_game_cursor_size()
+    assert gnome.game_cursor_size() == gnome.MAX_CURSOR_SIZE
+
+
+def test_settings_keep_each_other(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    gnome._save_cursor_size(1.5)
+    gnome.set_trail_enabled(False)
+    gnome._save_cursor_size(0.5)
+    assert gnome.cursor_size() == 0.5
+    assert not gnome.trail_enabled()
+
+
+def test_turning_the_trail_off_updates_the_running_state(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    state = gnome.data_dir() / "state.json"
+    state.parent.mkdir(parents=True)
+    state.write_text('{"skin": "s", "trail": {"file": "x"}}')
+    gnome.set_trail_enabled(False)
+    assert json.loads(state.read_text()) == {
+        "skin": "s", "trail": {"file": "x"}, "trail_enabled": False,
+    }
+
+
+@pytest.mark.parametrize(
+    ("info", "expected"),
+    [
+        ({"state": 1.0}, None),
+        ({"state": 4.0}, "uyumlu değil"),
+        ({"state": 3.0, "error": "patladı"}, "patladı"),
+        ({"state": 2.0}, "Eklentiler"),
+        ({}, "oturumu kapatıp"),
+    ],
+)
+def test_trail_problem_names_the_extension_state(tmp_path, monkeypatch, info, expected):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    state = gnome.data_dir() / "state.json"
+    state.parent.mkdir(parents=True)
+    state.write_text('{"skin": "s", "trail": {"file": "x"}}')
+    monkeypatch.setattr(gnome, "_extension_info", lambda: info)
+    problem = gnome.trail_problem()
+    assert problem is None if expected is None else expected in problem
+
+
+def test_no_warning_when_the_trail_is_turned_off(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    state = gnome.data_dir() / "state.json"
+    state.parent.mkdir(parents=True)
+    state.write_text('{"skin": "s", "trail": null}')
+    gnome.set_trail_enabled(False)
+    assert gnome.trail_problem() is None

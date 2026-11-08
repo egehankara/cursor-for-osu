@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import io
 import json
 import os
 import re
@@ -21,6 +22,11 @@ THEME_PATTERN = re.compile(r"^osu-cursor-[0-9a-f]{12}$")
 THEME_MARKER = ".osu-cursor"
 TRAIL_INTERVAL_DIVISOR = 2.5
 EXTENSION_STATE_ACTIVE = 1
+EXTENSION_STATE_INACTIVE = 2
+EXTENSION_STATE_ERROR = 3
+EXTENSION_STATE_OUT_OF_DATE = 4
+EXTENSION_STATE_INITIALIZED = 6
+PREVIEW_SIDE = 96  # shown at 48, sharp on scaled displays
 MIN_CURSOR_SIZE = 0.1  # same limits as the game's cursor size slider
 MAX_CURSOR_SIZE = 2.0
 MIN_SCREEN_SCALING = 0.2  # lower limit of the game's screen scaling sliders
@@ -47,6 +53,15 @@ class Result:
     has_trail: bool
     trail_active: bool
     size_px: int
+
+
+@dataclass
+class ExportedSkin:
+    path: Path
+    name: str
+    key: str  # same for skins whose cursor files are identical
+    has_trail: bool
+    preview_png: bytes
 
 
 def data_dir() -> Path:
@@ -131,7 +146,15 @@ def _game_float(name: str, default: float) -> float:
 
 def game_cursor_size() -> float:
     """The user's in-game cursor size, taken from osu!lazer's settings if present."""
-    return _game_float("GameplayCursorSize", 1.0)
+    return clamp_cursor_size(_game_float("GameplayCursorSize", 1.0))
+
+
+def has_game_cursor_size() -> bool:
+    return _game_setting("GameplayCursorSize") is not None
+
+
+def clamp_cursor_size(size: float) -> float:
+    return min(MAX_CURSOR_SIZE, max(MIN_CURSOR_SIZE, size))
 
 
 def gameplay_area(screen_width: int, screen_height: int) -> tuple[float, float]:
@@ -200,7 +223,12 @@ def _write_trail_state(skin: Skin, scale: float, cursor_size: float) -> None:
     directory = data_dir()
     directory.mkdir(parents=True, exist_ok=True)
 
-    state: dict = {"version": 1, "skin": skin.name, "trail": None}
+    state: dict = {
+        "version": 1,
+        "skin": skin.name,
+        "trail": None,
+        "trail_enabled": trail_enabled(),
+    }
     keep = set()
     if skin.trail:
         pixels = skin.trail.image.convert("RGBa").tobytes()
@@ -252,15 +280,15 @@ def enable_extension() -> None:
         _gsettings("set", "org.gnome.shell", "enabled-extensions", str(enabled))
 
 
-def extension_active() -> bool:
-    """Ask GNOME Shell whether the trail extension is running right now."""
+def _extension_info() -> dict:
+    """What GNOME Shell knows about the trail extension, empty if it hasn't seen it."""
     import gi
 
     gi.require_version("Gio", "2.0")
     from gi.repository import Gio, GLib
 
     try:
-        reply = Gio.bus_get_sync(Gio.BusType.SESSION).call_sync(
+        return Gio.bus_get_sync(Gio.BusType.SESSION).call_sync(
             "org.gnome.Shell",
             "/org/gnome/Shell",
             "org.gnome.Shell.Extensions",
@@ -272,27 +300,105 @@ def extension_active() -> bool:
             None,
         ).unpack()[0]
     except GLib.Error:
-        return False
-    return reply.get("state") == EXTENSION_STATE_ACTIVE
+        return {}
+
+
+def extension_active() -> bool:
+    """Ask GNOME Shell whether the trail extension is running right now."""
+    return _extension_info().get("state") == EXTENSION_STATE_ACTIVE
 
 
 def _settings_path() -> Path:
     return data_dir() / "settings.json"
 
 
+def _settings() -> dict:
+    try:
+        settings = json.loads(_settings_path().read_text())
+    except (OSError, ValueError):
+        return {}
+    return settings if isinstance(settings, dict) else {}
+
+
+def _save_setting(key: str, value: object) -> None:
+    data_dir().mkdir(parents=True, exist_ok=True)
+    settings = _settings()
+    settings[key] = value
+    _atomic_write(_settings_path(), json.dumps(settings).encode())
+
+
 def cursor_size() -> float:
     """The size chosen in this app, or else the one set in osu!lazer."""
     try:
-        return float(json.loads(_settings_path().read_text())["cursor_size"])
-    except (OSError, ValueError, KeyError, TypeError):
-        return min(MAX_CURSOR_SIZE, max(MIN_CURSOR_SIZE, game_cursor_size()))
+        return float(_settings()["cursor_size"])
+    except (ValueError, KeyError, TypeError):
+        return game_cursor_size()
 
 
 def _save_cursor_size(size: float) -> None:
     if not MIN_CURSOR_SIZE <= size <= MAX_CURSOR_SIZE:
         raise SkinError(f"Boyut {MIN_CURSOR_SIZE} ile {MAX_CURSOR_SIZE} arasında olmalı.")
-    data_dir().mkdir(parents=True, exist_ok=True)
-    _atomic_write(_settings_path(), json.dumps({"cursor_size": size}).encode())
+    _save_setting("cursor_size", size)
+
+
+def trail_enabled() -> bool:
+    return _settings().get("trail_enabled") is not False
+
+
+def set_trail_enabled(enabled: bool) -> None:
+    """Turn the trail on or off without rebuilding the cursor."""
+    _save_setting("trail_enabled", enabled)
+    path = data_dir() / "state.json"
+    try:
+        state = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return
+    state["trail_enabled"] = enabled
+    _atomic_write(path, json.dumps(state, ensure_ascii=False).encode())
+
+
+def _files_key(files: dict[str, bytes]) -> str:
+    digest = hashlib.sha256()
+    for name in sorted(files):
+        digest.update(name.encode())
+        digest.update(files[name])
+    return digest.hexdigest()
+
+
+def exported_skins() -> list[ExportedSkin]:
+    """The skins exported from osu!lazer, without repeats."""
+    directory = data_dir().parent / "osu" / "exports"
+    if not directory.is_dir():
+        return []
+
+    skins: dict[str, ExportedSkin] = {}
+    for path in sorted(directory.iterdir()):
+        if path.suffix.lower() != ".osk" or not path.is_file():
+            continue
+        try:
+            files = read_cursor_files(path)
+            skin = skin_from_files(files, path.stem)
+        except SkinError:
+            continue
+        key = _files_key(files)
+        if key not in skins:
+            image = io.BytesIO()
+            render.preview(skin, PREVIEW_SIDE).save(image, "PNG")
+            skins[key] = ExportedSkin(
+                path, " ".join(skin.name.split()), key, skin.trail is not None, image.getvalue()
+            )
+    return sorted(skins.values(), key=lambda skin: skin.name.casefold())
+
+
+def current_skin_key() -> str | None:
+    """Identifies the applied skin, comparable with ExportedSkin.key."""
+    source = _current_source()
+    if source is None:
+        return None
+    try:
+        return _files_key(read_cursor_files(source))
+    except SkinError:
+        return None
 
 
 def _source_dir() -> Path:
@@ -389,10 +495,19 @@ def trail_problem() -> str | None:
         state = json.loads((data_dir() / "state.json").read_text())
     except (OSError, ValueError):
         return None
-    if not state.get("skin"):
+    if not state.get("skin") or not trail_enabled():
         return None
     if not state.get("trail"):
         return "Bu skin'in trail'i yok, oyunda da görünmez."
-    if not extension_active():
-        return "Trail'in görünmesi için bir kez oturumu kapatıp tekrar aç."
-    return None
+
+    info = _extension_info()
+    status = info.get("state")
+    if status == EXTENSION_STATE_ACTIVE:
+        return None
+    if status == EXTENSION_STATE_OUT_OF_DATE:
+        return "GNOME sürümün değişmiş ve trail eklentisi bu sürümle uyumlu değil. osu-cursor'ın güncellenmesi gerekiyor."
+    if status == EXTENSION_STATE_ERROR:
+        return f"Trail eklentisi çalışamadı: {info.get('error') or 'bilinmeyen hata'}"
+    if status in (EXTENSION_STATE_INACTIVE, EXTENSION_STATE_INITIALIZED):
+        return "Trail eklentisi kapalı. Eklentiler uygulamasından aç."
+    return "Trail'in görünmesi için bir kez oturumu kapatıp tekrar aç."

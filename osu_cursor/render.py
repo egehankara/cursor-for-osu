@@ -38,6 +38,17 @@ def _radius(image: Image.Image, origin: tuple[float, float]) -> int:
     return math.ceil(max(math.dist(origin, corner) for corner in corners))
 
 
+def preview(skin: Skin, side: int) -> Image.Image:
+    """A square picture of the cursor, for the skin list."""
+    sprites = [sprite for sprite in (skin.cursor, skin.middle) if sprite]
+    scale = side / max(max(sprite.display_size) for sprite in sprites)
+    canvas = Image.new("RGBA", (side, side))
+    for sprite in sprites:
+        layer = _scaled(sprite, scale).convert("RGBA")
+        canvas.alpha_composite(layer, ((side - layer.width) // 2, (side - layer.height) // 2))
+    return canvas
+
+
 def build_frames(skin: Skin, scale: float) -> list[Frame]:
     cursor = _scaled(skin.cursor, scale)
     middle = _scaled(skin.middle, scale) if skin.middle else None
