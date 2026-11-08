@@ -79,6 +79,26 @@ def test_not_a_zip_is_an_error(tmp_path):
         load_skin(path)
 
 
+def write_game_ini(tmp_path, monkeypatch, text):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    (tmp_path / "osu").mkdir()
+    (tmp_path / "osu" / "game.ini").write_text(text)
+
+
+def test_screen_scaling_shrinks_the_gameplay_area(tmp_path, monkeypatch):
+    write_game_ini(
+        tmp_path, monkeypatch, "Scaling = Gameplay\nScalingSizeX = 0.67\nScalingSizeY = 0.8\n"
+    )
+    width, height = gnome.gameplay_area(2560, 1600)
+    assert (width, height) == pytest.approx((1715.2, 1280))
+    assert render.gameplay_scale(width, height, 1) == pytest.approx(1280 / 768)
+
+
+def test_screen_scaling_off_uses_the_whole_screen(tmp_path, monkeypatch):
+    write_game_ini(tmp_path, monkeypatch, "Scaling = Off\nScalingSizeX = 0.5\nScalingSizeY = 0.5\n")
+    assert gnome.gameplay_area(2560, 1600) == (2560, 1600)
+
+
 def test_gameplay_scale_matches_stable_ratio():
     assert render.gameplay_scale(1024, 768, 1) == 1
     assert render.gameplay_scale(2560, 1600, 1) == pytest.approx(1600 / 768)

@@ -23,6 +23,7 @@ TRAIL_INTERVAL_DIVISOR = 2.5
 EXTENSION_STATE_ACTIVE = 1
 MIN_CURSOR_SIZE = 0.1  # same limits as the game's cursor size slider
 MAX_CURSOR_SIZE = 2.0
+MIN_SCREEN_SCALING = 0.2  # lower limit of the game's screen scaling sliders
 
 # Every shape applications may ask for points at the one skin cursor.
 CURSOR_NAMES = """
@@ -111,16 +112,36 @@ def screen_size() -> tuple[int, int]:
     return 1920, 1080
 
 
-def game_cursor_size() -> float:
-    """The user's in-game cursor size, taken from osu!lazer's settings if present."""
+def _game_setting(name: str) -> str | None:
+    """A value from osu!lazer's game.ini, if the game is installed."""
     config = data_dir().parent / "osu" / "game.ini"
     try:
-        match = re.search(
-            r"^GameplayCursorSize\s*=\s*([0-9.]+)", config.read_text(), re.MULTILINE
-        )
+        match = re.search(rf"^{name}\s*=\s*(.+?)\s*$", config.read_text(), re.MULTILINE)
     except OSError:
-        return 1.0
-    return float(match.group(1)) if match else 1.0
+        return None
+    return match.group(1) if match else None
+
+
+def _game_float(name: str, default: float) -> float:
+    try:
+        return float(_game_setting(name) or default)
+    except ValueError:
+        return default
+
+
+def game_cursor_size() -> float:
+    """The user's in-game cursor size, taken from osu!lazer's settings if present."""
+    return _game_float("GameplayCursorSize", 1.0)
+
+
+def gameplay_area(screen_width: int, screen_height: int) -> tuple[float, float]:
+    """The screen area osu! plays in. Its Screen Scaling setting shrinks the cursor too."""
+    if (_game_setting("Scaling") or "Off").lower() == "off":
+        return screen_width, screen_height
+    return (
+        screen_width * min(1.0, max(MIN_SCREEN_SCALING, _game_float("ScalingSizeX", 1.0))),
+        screen_height * min(1.0, max(MIN_SCREEN_SCALING, _game_float("ScalingSizeY", 1.0))),
+    )
 
 
 def _skin_id(skin: Skin, scale: float) -> str:
@@ -301,7 +322,7 @@ def apply_skin(path: str | os.PathLike, size: float | None = None) -> Result:
     else:
         size = cursor_size()
 
-    width, height = screen_size()
+    width, height = gameplay_area(*screen_size())
     scale = render.gameplay_scale(width, height, size)
     system_size = int(_interface_get("cursor-size"))
 

@@ -26,7 +26,7 @@ osu-cursor status
 ## Nasıl çalışır
 
 - İmleç, skin'den üretilen bir Xcursor teması olur, böylece gecikmesiz donanım imleci kullanılır.
-  Boyut ve dönme hızı oyundaki değerlerle aynıdır. Boyut uygulamadaki kaydırıcıdan ayarlanır, ayarlanmadıysa osu!lazer'den okunur.
+  Boyut ve dönme hızı oyundaki değerlerle aynıdır. Boyut uygulamadaki kaydırıcıdan ayarlanır, ayarlanmadıysa osu!lazer'den okunur. Oyundaki ekran ölçekleme (Screen Scaling) ayarı da hesaba katılır.
 - Trail'i `extension/` altındaki GNOME Shell eklentisi çizer. Solma süreleri, parça aralığı ve
   karışım modu osu!lazer'in `CursorTrail` ve `LegacyCursorTrail` kodundan alınmıştır.
 - Tam ekran pencerelerde ve bir uygulama imleci gizlediğinde trail kapanır.

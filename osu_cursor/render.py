@@ -17,7 +17,7 @@ REVOLUTION_MS = 10_000
 SPIN_FRAMES = 120
 
 
-def gameplay_scale(screen_width: int, screen_height: int, cursor_size: float) -> float:
+def gameplay_scale(screen_width: float, screen_height: float, cursor_size: float) -> float:
     """Screen pixels per texture pixel of a non-@2x skin element during gameplay."""
     return min(screen_height, screen_width * 3 / 4) / 768 * cursor_size
 
@@ -63,10 +63,15 @@ def build_frames(skin: Skin, scale: float) -> list[Frame]:
         )
 
     count = SPIN_FRAMES if skin.cursor_rotate else 1
-    delay = round(REVOLUTION_MS / SPIN_FRAMES) if skin.cursor_rotate else 0
 
     frames = []
     for index in range(count):
+        # Whole-millisecond delays that still add up to exactly one revolution.
+        delay = (
+            round((index + 1) * REVOLUTION_MS / SPIN_FRAMES) - round(index * REVOLUTION_MS / SPIN_FRAMES)
+            if skin.cursor_rotate
+            else 0
+        )
         # PIL rotates counter-clockwise, the game spins clockwise.
         image = canvas.rotate(
             -360 * index / count, Image.Resampling.BICUBIC, center=(radius, radius)

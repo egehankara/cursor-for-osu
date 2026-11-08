@@ -59,6 +59,7 @@ class OsuCursorTrailActor extends Clutter.Actor {
         this._next = 0;
         this._alive = 0;
         this._bounds = null;
+        this.invalidate_paint_volume();
     }
 
     addPart(x, y, born = this._clock) {
@@ -102,6 +103,8 @@ class OsuCursorTrailActor extends Clutter.Actor {
         this._bounds = alive > 0
             ? {x: left - margin, y: top - margin, width: right - left + 2 * margin, height: bottom - top + 2 * margin}
             : null;
+        // Clutter caches the paint volume and would keep redrawing the old area.
+        this.invalidate_paint_volume();
         return alive;
     }
 
@@ -161,6 +164,8 @@ class Trail {
         this._last = null;
         this._current = null;
         this._lastStamp = 0;
+        this._nextStamp = 0;
+        this._moved = false;
         this._stamped = null;
         this._lastMotion = 0;
         this._frameTime = null;
@@ -252,7 +257,8 @@ class Trail {
 
         const base = Cogl.Pipeline.new(context);
         base.set_layer_texture(0, texture);
-        base.set_layer_filters(0, Cogl.PipelineFilter.LINEAR, Cogl.PipelineFilter.LINEAR);
+        // The game samples textures through mipmaps, which keeps shrunken trails smooth.
+        base.set_layer_filters(0, Cogl.PipelineFilter.LINEAR_MIPMAP_LINEAR, Cogl.PipelineFilter.LINEAR);
         base.set_blend(trail.disjoint ? BLEND_NORMAL : BLEND_ADDITIVE);
 
         // One pipeline per alpha step lets Cogl batch the rectangles.
@@ -297,27 +303,33 @@ class Trail {
     _hideIfSuppressed() {
         if (this._cursorVisible && !Main.layoutManager.currentMonitor?.inFullscreen)
             return false;
-        this._stop();
+        // Motion keeps arriving during a fullscreen game, so only clean up once.
+        if (this._actor.visible)
+            this._stop();
         this._last = null;
         this._current = null;
         return true;
     }
 
+    // A mouse can report a thousand times a second, but only one position per
+    // frame can be drawn. The frame reads the pointer, this only asks for one.
     _onMotion() {
-        if (!this._actor.hasConfig)
+        if (this._moved || !this._actor.hasConfig || this._hideIfSuppressed())
             return;
 
-        if (this._hideIfSuppressed())
-            return;
+        this._moved = true;
+        this._start();
+    }
 
+    _readPointer(clock) {
+        this._moved = false;
         const point = this._pointer();
         if (this._actor.config.disjoint) {
             this._current = {x: point.x, y: point.y};
-            this._lastMotion = this._actor.clock;
+            this._lastMotion = clock;
         } else {
             this._addInterpolated(point.x, point.y);
         }
-        this._start();
     }
 
     // Lines the parts up along the movement, keeping the distance left over for
@@ -365,6 +377,8 @@ class Trail {
         if (!from || from.x !== x || from.y !== y)
             this._lastMotion = clock;
         this._lastStamp = clock;
+        // Staying on a 60 Hz grid keeps the rate exact however frames fall around it.
+        this._nextStamp = clock + DISJOINT_SEPARATION_MS - (clock - this._nextStamp) % DISJOINT_SEPARATION_MS;
         this._stamped = {x, y};
     }
 
@@ -377,6 +391,7 @@ class Trail {
     }
 
     _stop() {
+        this._moved = false;
         this._stamped = null;
         this._timeline.stop();
         this._actor.clear();
@@ -393,7 +408,10 @@ class Trail {
         this._frameTime = now;
 
         const clock = this._actor.clock;
-        if (config.disjoint && this._current && clock - this._lastStamp >= DISJOINT_SEPARATION_MS)
+        if (this._moved)
+            this._readPointer(clock);
+
+        if (config.disjoint && this._current && clock >= this._nextStamp)
             this._stampDisjoint(clock, config.fade);
 
         const alive = this._actor.refresh();
