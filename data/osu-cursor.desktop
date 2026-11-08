@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=osu! Cursor
+Comment=osu! skin imlecini ve trail'ini her yerde kullan
+Exec=osu-cursor
+Icon=input-mouse
+Terminal=false
+Categories=Settings;Utility;
+StartupNotify=true
