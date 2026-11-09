@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Cursor for osu!
+Comment=Skin imlecini ve trail'ini her yerde kullan
+Exec=cursor-for-osu
+Icon=input-mouse
+Terminal=false
+Categories=Settings;Utility;
+StartupNotify=true
+StartupWMClass=io.github.xrayzack1010.OsuCursor

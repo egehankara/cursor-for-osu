@@ -17,7 +17,7 @@ def _report(result: gnome.Result) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="osu-cursor")
+    parser = argparse.ArgumentParser(prog="cursor-for-osu")
     commands = parser.add_subparsers(dest="command")
     apply_parser = commands.add_parser("apply", help="bir .osk dosyasını uygula")
     apply_parser.add_argument("skin", help=".osk dosyası veya skin klasörü")

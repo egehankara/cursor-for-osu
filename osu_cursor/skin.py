@@ -16,6 +16,17 @@ from PIL import Image, UnidentifiedImageError
 
 MAX_FILE_BYTES = 32 * 1024 * 1024
 MAX_IMAGE_SIDE = 4096
+CURSOR_FILES = frozenset(
+    {
+        "skin.ini",
+        "cursor.png",
+        "cursor@2x.png",
+        "cursormiddle.png",
+        "cursormiddle@2x.png",
+        "cursortrail.png",
+        "cursortrail@2x.png",
+    }
+)
 
 
 class SkinError(Exception):
@@ -39,13 +50,17 @@ class Skin:
     middle: Sprite | None
     trail: Sprite | None
     cursor_centre: bool
-    cursor_rotate: bool
-    cursor_trail_rotate: bool
 
     @property
     def disjoint_trail(self) -> bool:
         """Skins without cursormiddle use separate, stamped trail sprites."""
         return self.middle is None
+
+
+def skin_stem(path: str | Path) -> str:
+    """The name of a skin file or folder. Dots in a folder name are part of the name."""
+    path = Path(path)
+    return path.name if path.is_dir() else path.stem
 
 
 def read_cursor_files(path: str | Path) -> dict[str, bytes]:
@@ -94,9 +109,7 @@ def _has_cursor(names) -> bool:
 
 
 def _is_wanted(name: str) -> bool:
-    return name == "skin.ini" or (
-        name.startswith(("cursor.", "cursor@2x.", "cursormiddle", "cursortrail"))
-    )
+    return name in CURSOR_FILES
 
 
 def _decode(data: bytes) -> Image.Image | None:
@@ -119,6 +132,20 @@ def _sprite(files: dict[str, bytes], name: str) -> Sprite | None:
             image = _decode(data)
             if image is not None:
                 return Sprite(image, scale_adjust)
+    return None
+
+
+def _oversized_cursor(files: dict[str, bytes]) -> tuple[int, int] | None:
+    """The size of a cursor texture that was refused for being too large."""
+    for name in ("cursor@2x.png", "cursor.png"):
+        if name not in files:
+            continue
+        try:
+            size = Image.open(io.BytesIO(files[name])).size
+        except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
+            continue
+        if max(size) > MAX_IMAGE_SIDE:
+            return size
     return None
 
 
@@ -155,6 +182,13 @@ def _visible(sprite: Sprite | None) -> Sprite | None:
 def skin_from_files(files: dict[str, bytes], fallback_name: str) -> Skin:
     cursor = _sprite(files, "cursor")
     if cursor is None:
+        oversized = _oversized_cursor(files)
+        if oversized:
+            width, height = oversized
+            raise SkinError(
+                f"Bu skin'in cursor.png dosyası çok büyük ({width}×{height}, "
+                f"sınır {MAX_IMAGE_SIDE}×{MAX_IMAGE_SIDE})."
+            )
         raise SkinError("Bu skin'de okunabilir bir cursor.png yok.")
 
     general = parse_general(files["skin.ini"]) if "skin.ini" in files else {}
@@ -164,10 +198,8 @@ def skin_from_files(files: dict[str, bytes], fallback_name: str) -> Skin:
         middle=_sprite(files, "cursormiddle"),
         trail=_visible(_sprite(files, "cursortrail")),
         cursor_centre=_flag(general, "CursorCentre"),
-        cursor_rotate=_flag(general, "CursorRotate"),
-        cursor_trail_rotate=_flag(general, "CursorTrailRotate"),
     )
 
 
 def load_skin(path: str | Path) -> Skin:
-    return skin_from_files(read_cursor_files(path), Path(path).stem)
+    return skin_from_files(read_cursor_files(path), skin_stem(path))

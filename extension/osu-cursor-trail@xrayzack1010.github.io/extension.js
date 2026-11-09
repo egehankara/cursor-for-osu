@@ -7,14 +7,12 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Graphene from 'gi://Graphene';
-import Meta from 'gi://Meta';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const MAX_PARTS = 2048;
 const ALPHA_LEVELS = 64;
-const REVOLUTION_MS = 10000;
 const DISJOINT_FADE_MS = 150;
 const CONTINUOUS_FADE_MS = 500;
 const DISJOINT_SEPARATION_MS = 1000 / 60;
@@ -122,8 +120,7 @@ class OsuCursorTrailActor extends Clutter.Actor {
             return;
 
         const framebuffer = paintContext.get_framebuffer();
-        const {fade, width, height, offsetX, offsetY, rotate} = this._config;
-        const angle = rotate ? (GLib.get_monotonic_time() / 1000 % REVOLUTION_MS) / REVOLUTION_MS * 360 : 0;
+        const {fade, width, height, offsetX, offsetY} = this._config;
         const x1 = -offsetX;
         const y1 = -offsetY;
         const x2 = x1 + width;
@@ -144,15 +141,7 @@ class OsuCursorTrailActor extends Clutter.Actor {
             const x = this._xs[i];
             const y = this._ys[i];
 
-            if (rotate) {
-                framebuffer.push_matrix();
-                framebuffer.translate(x, y, 0);
-                framebuffer.rotate(angle, 0, 0, 1);
-                framebuffer.draw_textured_rectangle(pipeline, x1, y1, x2, y2, 0, 0, 1, 1);
-                framebuffer.pop_matrix();
-            } else {
-                framebuffer.draw_textured_rectangle(pipeline, x + x1, y + y1, x + x2, y + y2, 0, 0, 1, 1);
-            }
+            framebuffer.draw_textured_rectangle(pipeline, x + x1, y + y1, x + x2, y + y2, 0, 0, 1, 1);
         }
     }
 });
@@ -283,7 +272,6 @@ class Trail {
             offsetY,
             interval: Math.max(trail.interval, 0.5),
             disjoint: trail.disjoint,
-            rotate: trail.rotate,
             fade: trail.disjoint ? DISJOINT_FADE_MS : CONTINUOUS_FADE_MS,
             margin: Math.ceil(Math.hypot(reachX, reachY)) + 2,
         }, pipelines);

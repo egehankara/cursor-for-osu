@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs osu-cursor for the current user. Run it again to update.
+# Installs Cursor for osu! for the current user. Run it again to update.
 set -euo pipefail
 
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,13 +23,14 @@ rm -rf "$extension_dir"
 mkdir -p "$extension_dir"
 cp "$source_dir/extension/$uuid/"* "$extension_dir/"
 
-cat > "$bin_dir/osu-cursor" <<EOF
+rm -f "$bin_dir/osu-cursor" "$data_home/applications/osu-cursor.desktop"  # the old name
+cat > "$bin_dir/cursor-for-osu" <<EOF
 #!/bin/sh
 PYTHONPATH="$app_dir" exec python3 -m osu_cursor "\$@"
 EOF
-chmod +x "$bin_dir/osu-cursor"
+chmod +x "$bin_dir/cursor-for-osu"
 
-cp "$source_dir/data/osu-cursor.desktop" "$data_home/applications/"
+cp "$source_dir/data/cursor-for-osu.desktop" "$data_home/applications/"
 update-desktop-database "$data_home/applications" 2>/dev/null || true
 
 # GNOME only discovers new extensions at login, so turn it on for the next one.

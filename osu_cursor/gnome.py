@@ -11,22 +11,25 @@ import re
 import shutil
 import subprocess
 import zipfile
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
 from . import render, xcursor
-from .skin import Skin, SkinError, read_cursor_files, skin_from_files
+from .skin import Skin, SkinError, read_cursor_files, skin_from_files, skin_stem
 
 EXTENSION_UUID = "osu-cursor-trail@xrayzack1010.github.io"
 THEME_PATTERN = re.compile(r"^osu-cursor-[0-9a-f]{12}$")
 THEME_MARKER = ".osu-cursor"
-TRAIL_INTERVAL_DIVISOR = 2.5
+NAME_ENTRY = "display-name.txt"  # the name given in the app, kept inside the archive
+MAX_NAME_BYTES = 1024
 EXTENSION_STATE_ACTIVE = 1
 EXTENSION_STATE_INACTIVE = 2
 EXTENSION_STATE_ERROR = 3
 EXTENSION_STATE_OUT_OF_DATE = 4
 EXTENSION_STATE_INITIALIZED = 6
-PREVIEW_SIDE = 96  # shown at 48, sharp on scaled displays
+PREVIEW_WIDTH = 96
+PREVIEW_HEIGHT = 48
 MIN_CURSOR_SIZE = 0.1  # same limits as the game's cursor size slider
 MAX_CURSOR_SIZE = 2.0
 MIN_SCREEN_SCALING = 0.2  # lower limit of the game's screen scaling sliders
@@ -56,7 +59,7 @@ class Result:
 
 
 @dataclass
-class ExportedSkin:
+class LibrarySkin:
     path: Path
     name: str
     key: str  # same for skins whose cursor files are identical
@@ -67,6 +70,15 @@ class ExportedSkin:
 def data_dir() -> Path:
     base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local/share")
     return Path(base) / "osu-cursor"
+
+
+def skins_dir() -> Path:
+    """Where the skins added in the app are kept, one cursor-only folder each."""
+    return data_dir() / "skins"
+
+
+def exports_dir() -> Path:
+    return data_dir().parent / "osu" / "exports"
 
 
 def icons_dir() -> Path:
@@ -169,7 +181,7 @@ def gameplay_area(screen_width: int, screen_height: int) -> tuple[float, float]:
 
 def _skin_id(skin: Skin, scale: float) -> str:
     digest = hashlib.sha256(f"{scale:.4f}".encode())
-    digest.update(f"{skin.cursor_centre}{skin.cursor_rotate}".encode())
+    digest.update(f"still {skin.cursor_centre}".encode())
     for sprite in (skin.cursor, skin.middle):
         if sprite:
             digest.update(sprite.image.tobytes())
@@ -177,6 +189,7 @@ def _skin_id(skin: Skin, scale: float) -> str:
 
 
 def _write_theme(skin: Skin, scale: float, nominal_size: int) -> str:
+    frames = render.build_frames(skin, scale)  # first, it refuses cursors that are too large
     name = f"osu-cursor-{_skin_id(skin, scale)}"
     theme = icons_dir() / name
     temporary = icons_dir() / f".{name}.tmp"
@@ -184,7 +197,6 @@ def _write_theme(skin: Skin, scale: float, nominal_size: int) -> str:
     cursors = temporary / "cursors"
     cursors.mkdir(parents=True)
 
-    frames = render.build_frames(skin, scale)
     (cursors / "left_ptr").write_bytes(xcursor.encode(frames, nominal_size))
     for cursor_name in CURSOR_NAMES:
         if cursor_name != "left_ptr":
@@ -238,7 +250,7 @@ def _write_trail_state(skin: Skin, scale: float, cursor_size: float) -> None:
 
         display_width, display_height = skin.trail.display_size
         # IntervalMultiplier in LegacyCursorTrail cancels cursor sizes above 1.
-        interval = display_width * scale / TRAIL_INTERVAL_DIVISOR / max(cursor_size, 1)
+        interval = display_width * scale / render.TRAIL_INTERVAL_DIVISOR / max(cursor_size, 1)
         state["trail"] = {
             "file": file_name,
             "width": skin.trail.image.width,
@@ -247,7 +259,6 @@ def _write_trail_state(skin: Skin, scale: float, cursor_size: float) -> None:
             "display_height": display_height * scale,
             "interval": interval,
             "disjoint": skin.disjoint_trail,
-            "rotate": skin.cursor_trail_rotate and skin.cursor_rotate,
             "centre": skin.cursor_centre or not skin.disjoint_trail,
         }
 
@@ -365,33 +376,190 @@ def _files_key(files: dict[str, bytes]) -> str:
     return digest.hexdigest()
 
 
-def exported_skins() -> list[ExportedSkin]:
-    """The skins exported from osu!lazer, without repeats."""
-    directory = data_dir().parent / "osu" / "exports"
-    if not directory.is_dir():
-        return []
+def _write_archive(path: Path, files: dict[str, bytes]) -> None:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, data in files.items():
+            archive.writestr(name, data)
+    _atomic_write(path, buffer.getvalue())
 
-    skins: dict[str, ExportedSkin] = {}
+
+def _migrate_archives() -> None:
+    """Turn the .osk files of older versions into folders."""
+    for path in sorted(skins_dir().glob("*.osk")):
+        if not path.is_file():
+            continue
+        try:
+            files = read_cursor_files(path)
+        except (SkinError, zipfile.BadZipFile, OSError):
+            continue
+        custom_name = _custom_name(path)
+        if custom_name:
+            files[NAME_ENTRY] = custom_name.encode()
+        _store_skin(files, path.stem)
+        path.unlink()
+
+
+def _stored_skins() -> Iterator[tuple[Path, dict[str, bytes]]]:
+    """The readable skin folders in the library, with their cursor files."""
+    directory = skins_dir()
+    if not directory.is_dir():
+        return
+    _migrate_archives()
     for path in sorted(directory.iterdir()):
+        if not path.is_dir() or path.name.startswith("."):
+            continue
+        try:
+            yield path, read_cursor_files(path)
+        except (SkinError, OSError):  # OSError: it was removed while the list was being read
+            continue
+
+
+def library_skins() -> list[LibrarySkin]:
+    """The skins added in the app, sorted by name."""
+    skins = []
+    for path, files in _stored_skins():
+        try:
+            skin = skin_from_files(files, path.name)
+        except SkinError:
+            continue
+        image = io.BytesIO()
+        render.preview(skin, PREVIEW_WIDTH, PREVIEW_HEIGHT).save(image, "PNG")
+        skins.append(
+            LibrarySkin(
+                path,
+                _custom_name(path) or " ".join(skin.name.split()),
+                _files_key(files),
+                skin.trail is not None,
+                image.getvalue(),
+            )
+        )
+    return sorted(skins, key=lambda skin: skin.name.casefold())
+
+
+def add_skin(path: str | os.PathLike) -> None:
+    """Copy the cursor files of a skin into the library. The original is left alone."""
+    files = read_cursor_files(path)
+    stem = skin_stem(path)
+    skin_from_files(files, stem)  # refuses skins with no usable cursor
+
+    key = _files_key(files)
+    if any(_files_key(stored) == key for _path, stored in _stored_skins()):
+        raise SkinError("Bu skin zaten listede.")
+
+    _store_skin(files, stem)
+
+
+def add_skins(paths: list[str]) -> tuple[int, int]:
+    """Add several skins, going on after a bad one. Returns (added, skipped)."""
+    added = skipped = 0
+    for path in paths:
+        try:
+            add_skin(path)
+            added += 1
+        except (SkinError, zipfile.BadZipFile, OSError):
+            skipped += 1
+    return added, skipped
+
+
+def add_exported_skins() -> int:
+    """Add the usable skins from osu!lazer's exports folder. Returns how many were new."""
+    directory = exports_dir()
+    if not directory.is_dir():
+        return 0
+
+    known = {_files_key(stored) for _path, stored in _stored_skins()}
+    added = 0
+    # Shortest name first, so "skin.osk" wins over its repeat "skin (1).osk".
+    for path in sorted(directory.iterdir(), key=lambda path: (len(path.name), path.name)):
         if path.suffix.lower() != ".osk" or not path.is_file():
             continue
         try:
             files = read_cursor_files(path)
-            skin = skin_from_files(files, path.stem)
-        except SkinError:
-            continue
+            skin_from_files(files, path.stem)
+        except (SkinError, zipfile.BadZipFile, OSError):
+            continue  # one bad export should not stop the others
         key = _files_key(files)
-        if key not in skins:
-            image = io.BytesIO()
-            render.preview(skin, PREVIEW_SIDE).save(image, "PNG")
-            skins[key] = ExportedSkin(
-                path, " ".join(skin.name.split()), key, skin.trail is not None, image.getvalue()
-            )
-    return sorted(skins.values(), key=lambda skin: skin.name.casefold())
+        if key not in known:
+            _store_skin(files, path.stem)
+            known.add(key)
+            added += 1
+    return added
+
+
+def _store_skin(files: dict[str, bytes], stem: str) -> None:
+    directory = skins_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    stem = stem.lstrip(".") or "skin"  # names starting with a dot are skipped as temporary
+    target = directory / stem
+    number = 2
+    while target.exists():
+        target = directory / f"{stem} ({number})"
+        number += 1
+
+    temporary = directory / f".{target.name}.tmp"
+    shutil.rmtree(temporary, ignore_errors=True)
+    temporary.mkdir()
+    for name, data in files.items():
+        (temporary / name).write_bytes(data)
+    temporary.rename(target)
+
+
+def remove_skin(path: str | os.PathLike) -> None:
+    """Delete a skin from the library. If it is in use, go back to the previous cursor."""
+    path = Path(path)
+    if path.parent != skins_dir():
+        raise SkinError("Bu dosya skin listesine ait değil.")
+    if path.exists():
+        in_use = _files_key(read_cursor_files(path)) == current_skin_key()
+        shutil.rmtree(path)
+        if in_use:
+            reset()
+
+
+def _custom_name(path: Path | str | os.PathLike) -> str | None:
+    """The name given to a skin in the app, if it has one."""
+    path = Path(path)
+    try:
+        if path.is_dir():
+            entry = path / NAME_ENTRY
+            if entry.stat().st_size > MAX_NAME_BYTES:
+                return None
+            data = entry.read_bytes()
+        else:
+            with zipfile.ZipFile(path) as archive:
+                info = archive.getinfo(NAME_ENTRY)
+                if info.file_size > MAX_NAME_BYTES:
+                    return None
+                data = archive.read(info)
+        return data.decode().strip() or None
+    except (KeyError, OSError, UnicodeDecodeError, zipfile.BadZipFile):
+        return None
+
+
+def rename_skin(path: str | os.PathLike, name: str) -> None:
+    """Give a library skin a new name. The skin's own files stay as they are."""
+    path = Path(path)
+    if path.parent != skins_dir():
+        raise SkinError("Bu dosya skin listesine ait değil.")
+    name = " ".join(name.split())
+    if not name:
+        raise SkinError("İsim boş olamaz.")
+    if len(name.encode()) > MAX_NAME_BYTES:
+        raise SkinError("Bu isim çok uzun.")
+
+    files = read_cursor_files(path)
+    _atomic_write(path / NAME_ENTRY, name.encode())
+
+    source = _current_source()
+    if source is not None:
+        applied = read_cursor_files(source)
+        if _files_key(applied) == _files_key(files):
+            _write_archive(source, {**applied, NAME_ENTRY: name.encode()})
 
 
 def current_skin_key() -> str | None:
-    """Identifies the applied skin, comparable with ExportedSkin.key."""
+    """Identifies the applied skin, comparable with LibrarySkin.key."""
     source = _current_source()
     if source is None:
         return None
@@ -413,15 +581,16 @@ def _keep_source(files: dict[str, bytes], stem: str) -> None:
     """Keep the cursor files so the size can change without dropping the skin again."""
     shutil.rmtree(_source_dir(), ignore_errors=True)
     _source_dir().mkdir(parents=True)
-    with zipfile.ZipFile(_source_dir() / f"{stem}.osk", "w") as archive:
-        for name, data in files.items():
-            archive.writestr(name, data)
+    _write_archive(_source_dir() / f"{stem}.osk", files)
 
 
 def apply_skin(path: str | os.PathLike, size: float | None = None) -> Result:
     files = read_cursor_files(path)
-    stem = Path(path).stem
+    stem = skin_stem(path)
     skin = skin_from_files(files, stem)
+    custom_name = _custom_name(path)
+    if custom_name:
+        skin.name = custom_name
 
     if size is not None:
         _save_cursor_size(size)
@@ -434,7 +603,7 @@ def apply_skin(path: str | os.PathLike, size: float | None = None) -> Result:
 
     theme = _write_theme(skin, scale, system_size)
     _write_trail_state(skin, scale, size)
-    _keep_source(files, stem)
+    _keep_source({**files, NAME_ENTRY: custom_name.encode()} if custom_name else files, stem)
 
     current = _interface_get("cursor-theme").strip("'")
     previous = data_dir() / "previous.json"
@@ -483,6 +652,10 @@ def reset() -> str | None:
 
 
 def current_skin() -> str | None:
+    source = _current_source()
+    custom_name = _custom_name(source) if source else None
+    if custom_name:
+        return custom_name
     try:
         return json.loads((data_dir() / "state.json").read_text()).get("skin")
     except (OSError, ValueError):
@@ -495,17 +668,15 @@ def trail_problem() -> str | None:
         state = json.loads((data_dir() / "state.json").read_text())
     except (OSError, ValueError):
         return None
-    if not state.get("skin") or not trail_enabled():
+    if not state.get("skin") or not state.get("trail") or not trail_enabled():
         return None
-    if not state.get("trail"):
-        return "Bu skin'in trail'i yok, oyunda da görünmez."
 
     info = _extension_info()
     status = info.get("state")
     if status == EXTENSION_STATE_ACTIVE:
         return None
     if status == EXTENSION_STATE_OUT_OF_DATE:
-        return "GNOME sürümün değişmiş ve trail eklentisi bu sürümle uyumlu değil. osu-cursor'ın güncellenmesi gerekiyor."
+        return "GNOME sürümün değişmiş ve trail eklentisi bu sürümle uyumlu değil. Cursor for osu!'ın güncellenmesi gerekiyor."
     if status == EXTENSION_STATE_ERROR:
         return f"Trail eklentisi çalışamadı: {info.get('error') or 'bilinmeyen hata'}"
     if status in (EXTENSION_STATE_INACTIVE, EXTENSION_STATE_INITIALIZED):

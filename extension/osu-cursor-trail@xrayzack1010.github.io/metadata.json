@@ -1,7 +1,7 @@
 {
   "uuid": "osu-cursor-trail@xrayzack1010.github.io",
-  "name": "osu! Cursor Trail",
-  "description": "Draws the cursor trail of the skin applied with osu-cursor.",
+  "name": "Cursor for osu! Trail",
+  "description": "Draws the cursor trail of the skin applied with Cursor for osu!.",
   "shell-version": ["51"],
-  "url": "https://github.com/xrayzack1010/osu-cursor"
+  "url": "https://github.com/egehankara/cursor-for-osu"
 }

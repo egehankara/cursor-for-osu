@@ -2,6 +2,7 @@ import io
 import json
 import struct
 import zipfile
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -34,9 +35,7 @@ def test_reads_flags_and_name(tmp_path):
     ini = b"\xef\xbb\xbf[General]\r\nName: Cool // note\r\nCursorRotate: 0\r\nCursorCentre:0\r\n"
     skin = load_skin(osk(tmp_path, {"cursor.png": png(), "skin.ini": ini}))
     assert skin.name == "Cool"
-    assert not skin.cursor_rotate
     assert not skin.cursor_centre
-    assert skin.cursor_trail_rotate
 
 
 def test_flags_outside_general_are_ignored():
@@ -107,25 +106,6 @@ def test_gameplay_scale_matches_stable_ratio():
     assert render.gameplay_scale(768, 1024, 1) == pytest.approx(576 / 768)
 
 
-def test_spinning_cursor_has_a_full_revolution(tmp_path):
-    skin = load_skin(osk(tmp_path, {"cursor.png": png(32, 32)}))
-    frames = render.build_frames(skin, 1.0)
-    assert len(frames) == render.SPIN_FRAMES
-    assert sum(frame.delay_ms for frame in frames) == pytest.approx(render.REVOLUTION_MS, abs=60)
-    assert (frames[0].hot_x * 2, frames[0].hot_y * 2) == frames[0].image.size
-
-
-def test_still_cursor_with_top_left_origin(tmp_path):
-    ini = b"[General]\nCursorRotate: 0\nCursorCentre: 0\n"
-    skin = load_skin(osk(tmp_path, {"cursor.png": png(16, 16), "skin.ini": ini}))
-    frames = render.build_frames(skin, 1.0)
-    assert len(frames) == 1
-    frame = frames[0]
-    # The texture's corner sits on the hotspot, not its middle.
-    assert frame.image.convert("RGBA").getpixel((frame.hot_x + 2, frame.hot_y + 2))[3] == 255
-    assert frame.image.convert("RGBA").getpixel((frame.hot_x - 2, frame.hot_y - 2))[3] == 0
-
-
 def test_xcursor_layout():
     image = Image.new("RGBa", (2, 1), (10, 20, 30, 255))
     data = xcursor.encode([xcursor.Frame(image, 1, 0, 50)], 24)
@@ -179,40 +159,412 @@ def test_size_outside_the_game_range_is_refused(desktop):
         gnome.set_cursor_size(2.5)
 
 
-def test_explains_a_missing_trail(tmp_path, desktop):
+def test_a_skin_without_a_trail_is_not_reported_as_a_problem(tmp_path, desktop):
     blank = png(1, 1, (0, 0, 0, 0))
     gnome.apply_skin(osk(tmp_path, {"cursor.png": png(), "cursortrail.png": blank}), 1.0)
-    assert "trail'i yok" in gnome.trail_problem()
+    assert gnome.trail_problem() is None
 
 
-def exports(tmp_path, monkeypatch):
-    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-    directory = tmp_path / "osu" / "exports"
-    directory.mkdir(parents=True)
-    return directory
+def library(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    source = tmp_path / "downloads"
+    source.mkdir()
+    return source
 
 
-def test_exported_skins_skip_repeats_and_broken_files(tmp_path, monkeypatch):
-    directory = exports(tmp_path, monkeypatch)
+def test_library_lists_added_skins_by_name(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
     trail = {"cursor.png": png(), "cursortrail.png": png(), "skin.ini": b"[General]\nName: B   skin\n"}
-    osk(directory, trail, "b.osk")
-    osk(directory, trail, "b (1).osk")
-    osk(directory, {"cursor.png": png(colour=(0, 255, 0, 255))}, "a.osk")
-    (directory / "broken.osk").write_bytes(b"not a zip")
+    gnome.add_skin(osk(source, trail, "b.osk"))
+    gnome.add_skin(osk(source, {"cursor.png": png(colour=(0, 255, 0, 255))}, "a.osk"))
+    (gnome.skins_dir() / "broken.osk").write_bytes(b"not a zip")
 
-    skins = gnome.exported_skins()
+    skins = gnome.library_skins()
 
     assert [skin.name for skin in skins] == ["a", "B skin"]
     assert [skin.has_trail for skin in skins] == [False, True]
-    assert Image.open(io.BytesIO(skins[0].preview_png)).size == (96, 96)
+    assert Image.open(io.BytesIO(skins[0].preview_png)).size == (96, 48)
 
 
-def test_current_skin_key_matches_the_exported_skin(tmp_path, monkeypatch):
-    directory = exports(tmp_path, monkeypatch)
+def test_an_oversized_cursor_says_so(tmp_path):
+    with pytest.raises(SkinError, match="çok büyük .4097×1"):
+        load_skin(osk(tmp_path, {"cursor.png": png(4097, 1)}))
+
+
+def test_a_missing_cursor_still_says_it_is_missing(tmp_path):
+    with pytest.raises(SkinError, match="cursor.png yok"):
+        load_skin(osk(tmp_path, {"hitcircle.png": png()}))
+
+
+def test_an_oversized_2x_falls_back_to_the_normal_cursor(tmp_path):
+    skin = load_skin(osk(tmp_path, {"cursor@2x.png": png(4097, 1), "cursor.png": png(8, 8)}))
+    assert skin.cursor.scale_adjust == 1
+
+
+def spinning(tmp_path, side):
+    return load_skin(osk(tmp_path, {"cursor.png": png(side, side)}))
+
+
+def visible_area(image):
+    return sum(1 for value in image.convert("RGBA").getchannel("A").tobytes() if value)
+
+
+def canvas_for(tmp_path, image, ini=b"[General]\nCursorRotate: 0\nCursorCentre: 1\n", scale=1.0):
+    buffer = io.BytesIO()
+    image.save(buffer, "PNG")
+    return render.build_frames(load_skin(osk(tmp_path, {"cursor.png": buffer.getvalue(), "skin.ini": ini})), scale)[0]
+
+
+def test_the_canvas_stops_at_the_visible_part(tmp_path):
+    image = Image.new("RGBA", (100, 100))
+    image.paste((255, 0, 0, 255), (45, 45, 55, 55))
+    frame = canvas_for(tmp_path, image)
+    assert frame.image.width < 40
+    assert (frame.hot_x, frame.hot_y) == (frame.image.width // 2, frame.image.height // 2)
+    assert visible_area(frame.image) == 100
+
+
+@pytest.mark.parametrize("centre", [b"1", b"0"])
+def test_nothing_visible_is_cut_off_at_the_corners(tmp_path, centre):
+    image = Image.new("RGBA", (64, 64))
+    for corner in ((0, 0), (63, 0), (0, 63), (63, 63)):
+        image.putpixel(corner, (255, 0, 0, 255))
+    frame = canvas_for(tmp_path, image, b"[General]\nCursorRotate: 0\nCursorCentre: " + centre + b"\n")
+    assert visible_area(frame.image) == 4
+
+
+def test_a_fully_transparent_cursor_still_gets_a_canvas(tmp_path):
+    frame = canvas_for(tmp_path, Image.new("RGBA", (16, 16)))
+    assert frame.image.size == (1, 1)
+
+
+def test_every_skin_is_still_even_when_it_asks_to_spin(tmp_path):
+    ini = b"[General]\nCursorRotate: 1\nCursorTrailRotate: 1\n"
+    frames = render.build_frames(load_skin(osk(tmp_path, {"cursor.png": png(16, 16), "skin.ini": ini})), 1.0)
+    assert [frame.delay_ms for frame in frames] == [0]
+
+
+def test_a_skin_that_does_not_say_stays_still_too(tmp_path):
+    assert len(render.build_frames(spinning(tmp_path, 16), 1.0)) == 1
+
+
+def test_a_top_left_cursor_keeps_its_hotspot(tmp_path):
+    image = Image.new("RGBA", (40, 40))
+    image.paste((255, 0, 0, 255), (10, 10, 20, 20))
+    frame = canvas_for(tmp_path, image, b"[General]\nCursorCentre: 0\n")
+    assert (frame.hot_x, frame.hot_y) == (0, 0)
+    assert frame.image.size == (20, 20)
+
+
+def test_the_hotspot_stays_inside_a_ring_shaped_corner_cursor(tmp_path):
+    image = Image.new("RGBA", (100, 100))
+    image.paste((255, 0, 0, 255), (70, 70, 80, 80))
+    frame = canvas_for(tmp_path, image)
+    assert 0 <= frame.hot_x < frame.image.width and 0 <= frame.hot_y < frame.image.height
+    assert (frame.hot_x, frame.hot_y) == (0, 0)
+    assert frame.image.size == (30, 30)
+
+
+def test_a_larger_cursormiddle_is_not_cut_off(tmp_path):
+    cursor = png(8, 8)
+    middle = png(32, 32, (0, 255, 0, 255))
+    skin = load_skin(osk(tmp_path, {"cursor.png": cursor, "cursormiddle.png": middle}))
+    frame = render.build_frames(skin, 1.0)[0]
+    assert frame.image.size == (32, 32)
+    assert (frame.hot_x, frame.hot_y) == (16, 16)
+
+
+def test_the_trail_state_says_nothing_about_spinning(tmp_path, desktop):
+    ini = b"[General]\nCursorRotate: 1\nCursorTrailRotate: 1\n"
+    gnome.apply_skin(osk(tmp_path, {"cursor.png": png(), "cursortrail.png": png(), "skin.ini": ini}), 1.0)
+    state = json.loads((gnome.data_dir() / "state.json").read_text())
+    assert "rotate" not in state["trail"]
+
+
+def test_a_huge_cursor_is_refused_before_it_is_resized(tmp_path, monkeypatch):
+    skin = spinning(tmp_path, 16)
+    monkeypatch.setattr(render, "MAX_CURSOR_BYTES", 16)
+    monkeypatch.setattr(render, "_scaled", lambda *_args: pytest.fail("resized anyway"))
+    with pytest.raises(SkinError, match="çok büyük"):
+        render.build_frames(skin, 1.0)
+
+
+def test_a_refused_cursor_leaves_the_applied_skin_alone(tmp_path, desktop, monkeypatch):
+    gnome.apply_skin(osk(tmp_path, {"cursor.png": png(16, 16)}, "a.osk"), 1.0)
+    theme = desktop["cursor-theme"]
+    monkeypatch.setattr(render, "MAX_CURSOR_BYTES", 16)
+
+    with pytest.raises(SkinError, match="çok büyük"):
+        gnome.apply_skin(osk(tmp_path, {"cursor.png": png(32, 32)}, "b.osk"), 1.0)
+
+    assert desktop["cursor-theme"] == theme
+    assert gnome.current_skin() == "a"
+    assert [entry.name for entry in gnome.icons_dir().iterdir()] == [theme]
+
+
+def test_library_is_empty_before_anything_is_added(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    assert gnome.library_skins() == []
+
+
+def test_add_keeps_only_cursor_files_and_leaves_the_original(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    original = osk(
+        source,
+        {"cursor.png": png(), "cursortrail-0.png": png(), "hitcircle.png": png(), "skin.ini": b""},
+        "a.osk",
+    )
+    before = original.read_bytes()
+
+    gnome.add_skin(original)
+
+    assert original.read_bytes() == before
+    assert sorted(file.name for file in (gnome.skins_dir() / "a").iterdir()) == ["cursor.png", "skin.ini"]
+
+
+def test_add_refuses_the_same_skin_twice(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
     files = {"cursor.png": png()}
-    osk(directory, files, "a.osk")
+    gnome.add_skin(osk(source, files, "a.osk"))
+    with pytest.raises(SkinError, match="zaten listede"):
+        gnome.add_skin(osk(source, files, "b.osk"))
+
+
+def test_add_refuses_a_skin_with_no_cursor(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    with pytest.raises(SkinError):
+        gnome.add_skin(osk(source, {"hitcircle.png": png()}, "a.osk"))
+    assert gnome.library_skins() == []
+
+
+def test_different_skins_with_one_file_name_are_both_kept(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    gnome.add_skin(osk(source, {"cursor.png": png()}, "a.osk"))
+    gnome.add_skin(osk(source, {"cursor.png": png(colour=(0, 255, 0, 255))}, "a.osk"))
+    assert sorted(path.name for path in gnome.skins_dir().iterdir()) == ["a", "a (2)"]
+
+
+def test_remove_deletes_only_the_library_copy(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    original = osk(source, {"cursor.png": png()}, "a.osk")
+    gnome.add_skin(original)
+
+    gnome.remove_skin(gnome.library_skins()[0].path)
+
+    assert gnome.library_skins() == []
+    assert original.exists()
+
+
+def test_remove_refuses_files_outside_the_library(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    original = osk(source, {"cursor.png": png()}, "a.osk")
+    with pytest.raises(SkinError):
+        gnome.remove_skin(original)
+    assert original.exists()
+
+
+def test_exports_are_added_once_as_cursor_files_only(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    exports = gnome.exports_dir()
+    exports.mkdir(parents=True)
+    original = osk(exports, {"cursor.png": png(), "hitcircle.png": png()}, "a.osk")
+    osk(exports, {"cursor.png": png()}, "a (1).osk")
+    osk(exports, {"cursor.png": png(colour=(0, 255, 0, 255))}, "b.OSK")
+    osk(exports, {"hitcircle.png": png()}, "no-cursor.osk")
+    (exports / "broken.osk").write_bytes(b"not a zip")
+    (exports / "notes.txt").write_text("skip me")
+    before = original.read_bytes()
+
+    assert gnome.add_exported_skins() == 2
+    assert gnome.add_exported_skins() == 0
+
+    assert sorted(path.name for path in gnome.skins_dir().iterdir()) == ["a", "b"]
+    assert original.read_bytes() == before
+    assert [file.name for file in (gnome.skins_dir() / "a").iterdir()] == ["cursor.png"]
+
+
+def test_add_exports_without_an_exports_folder(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    assert gnome.add_exported_skins() == 0
+
+
+def test_rename_changes_the_listed_name_only(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    files = {"cursor.png": png(), "skin.ini": b"[General]\nName: Old\n"}
+    original = osk(source, files, "a.osk")
+    gnome.add_skin(original)
+    before = gnome.library_skins()[0]
+
+    gnome.rename_skin(before.path, "  Yeni   isim ")
+
+    after = gnome.library_skins()[0]
+    assert (after.name, after.path, after.key) == ("Yeni isim", before.path, before.key)
+    with zipfile.ZipFile(original) as untouched:
+        assert gnome.NAME_ENTRY not in untouched.namelist()
+    with pytest.raises(SkinError, match="zaten listede"):
+        gnome.add_skin(original)
+
+
+def test_rename_refuses_empty_names_and_outside_files(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    original = osk(source, {"cursor.png": png()}, "a.osk")
+    gnome.add_skin(original)
+    with pytest.raises(SkinError, match="boş"):
+        gnome.rename_skin(gnome.library_skins()[0].path, "   ")
+    with pytest.raises(SkinError):
+        gnome.rename_skin(original, "x")
+
+
+def test_a_name_inside_a_downloaded_skin_is_not_used(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    gnome.add_skin(osk(source, {"cursor.png": png(), gnome.NAME_ENTRY: b"sneaky"}, "a.osk"))
+    assert gnome.library_skins()[0].name == "a"
+
+
+def test_renaming_the_applied_skin_updates_it_and_survives_a_size_change(tmp_path, desktop):
+    source = tmp_path / "downloads"
+    source.mkdir()
+    gnome.add_skin(osk(source, {"cursor.png": png(40, 40)}, "a.osk"))
+    skin = gnome.library_skins()[0]
+    gnome.apply_skin(skin.path, 1.0)
+
+    gnome.rename_skin(skin.path, "Yeni")
+    assert gnome.current_skin() == "Yeni"
+    assert gnome.current_skin_key() == skin.key
+
+    gnome.set_cursor_size(1.5)
+    assert gnome.current_skin() == "Yeni"
+
+    gnome.apply_skin(gnome.library_skins()[0].path, 1.0)
+    assert gnome.current_skin() == "Yeni"
+
+
+def skin_folder(parent, name, files):
+    folder = parent / name
+    folder.mkdir()
+    for filename, data in files.items():
+        (folder / filename).write_bytes(data)
+    return folder
+
+
+def test_a_folder_can_be_added_and_keeps_the_dots_in_its_name(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    folder = skin_folder(
+        source, "Skin v1.2", {"Cursor.PNG": png(), "hitcircle.png": png(), gnome.NAME_ENTRY: b"sneaky"}
+    )
+
+    gnome.add_skin(folder)
+
+    skin = gnome.library_skins()[0]
+    assert (skin.name, skin.path.name) == ("Skin v1.2", "Skin v1.2")
+    assert [file.name for file in skin.path.iterdir()] == ["cursor.png"]
+    assert sorted(file.name for file in folder.iterdir()) == sorted(
+        ["Cursor.PNG", "hitcircle.png", gnome.NAME_ENTRY]
+    )
+
+
+def test_a_folder_and_an_osk_of_one_skin_count_as_the_same(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    files = {"cursor.png": png()}
+    gnome.add_skin(skin_folder(source, "folder", files))
+    with pytest.raises(SkinError, match="zaten listede"):
+        gnome.add_skin(osk(source, files, "a.osk"))
+
+
+def test_a_folder_without_a_cursor_is_refused(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    with pytest.raises(SkinError):
+        gnome.add_skin(skin_folder(source, "empty", {"hitcircle.png": png()}))
+    assert gnome.library_skins() == []
+
+
+def test_old_archives_become_folders_and_keep_their_names(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    gnome.skins_dir().mkdir(parents=True)
+    osk(gnome.skins_dir(), {"cursor.png": png(), gnome.NAME_ENTRY: "Özel".encode()}, "a.osk")
+    (gnome.skins_dir() / "broken.osk").write_bytes(b"not a zip")
+
+    skins = gnome.library_skins()
+
+    assert [(skin.name, skin.path.name) for skin in skins] == [("Özel", "a")]
+    assert skins[0].path.is_dir()
+    assert not (gnome.skins_dir() / "a.osk").exists()
+    assert (gnome.skins_dir() / "broken.osk").exists()
+
+
+def test_remove_deletes_the_whole_folder(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    gnome.add_skin(osk(source, {"cursor.png": png()}, "a.osk"))
+    folder = gnome.library_skins()[0].path
+    gnome.rename_skin(folder, "Yeni")
+
+    gnome.remove_skin(folder)
+
+    assert not folder.exists()
+    assert list(gnome.skins_dir().iterdir()) == []
+
+
+def test_add_skins_goes_on_after_a_bad_one(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    first = osk(source, {"cursor.png": png()}, "a.osk")
+    second = osk(source, {"cursor.png": png(colour=(0, 255, 0, 255))}, "b.osk")
+    broken = source / "broken.osk"
+    broken.write_bytes(b"not a zip")
+
+    assert gnome.add_skins([str(first), str(broken), str(first), str(second)]) == (2, 2)
+    assert sorted(skin.name for skin in gnome.library_skins()) == ["a", "b"]
+
+
+def test_a_folder_that_vanishes_during_a_read_is_skipped(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    gnome.add_skin(osk(source, {"cursor.png": png()}, "a.osk"))
+    gnome.add_skin(osk(source, {"cursor.png": png(colour=(0, 255, 0, 255))}, "b.osk"))
+    real = gnome.read_cursor_files
+
+    def flaky(path):
+        if Path(path).name == "a":
+            raise FileNotFoundError(path)
+        return real(path)
+
+    monkeypatch.setattr(gnome, "read_cursor_files", flaky)
+    assert [skin.name for skin in gnome.library_skins()] == ["b"]
+
+
+def test_removing_the_skin_in_use_goes_back_to_the_previous_cursor(tmp_path, desktop):
+    source = tmp_path / "downloads"
+    source.mkdir()
+    gnome.add_skin(osk(source, {"cursor.png": png(16, 16)}, "a.osk"))
+    skin = gnome.library_skins()[0]
+    gnome.apply_skin(skin.path, 1.0)
+
+    gnome.remove_skin(skin.path)
+
+    assert desktop["cursor-theme"] == "Adwaita"
+    assert gnome.current_skin() is None
+    assert gnome.library_skins() == []
+
+
+def test_removing_another_skin_keeps_the_cursor_in_use(tmp_path, desktop):
+    source = tmp_path / "downloads"
+    source.mkdir()
+    gnome.add_skin(osk(source, {"cursor.png": png(16, 16)}, "a.osk"))
+    gnome.add_skin(osk(source, {"cursor.png": png(16, 16, (0, 255, 0, 255))}, "b.osk"))
+    used, other = gnome.library_skins()
+    gnome.apply_skin(used.path, 1.0)
+    theme = desktop["cursor-theme"]
+
+    gnome.remove_skin(other.path)
+
+    assert desktop["cursor-theme"] == theme
+    assert gnome.current_skin() == "a"
+
+
+def test_current_skin_key_matches_the_library_skin(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    files = {"cursor.png": png()}
+    gnome.add_skin(osk(source, files, "a.osk"))
     gnome._keep_source(files, "kept")
-    assert gnome.current_skin_key() == gnome.exported_skins()[0].key
+    assert gnome.current_skin_key() == gnome.library_skins()[0].key
 
 
 def test_game_cursor_size_is_kept_in_range(tmp_path, monkeypatch):
@@ -268,3 +620,42 @@ def test_no_warning_when_the_trail_is_turned_off(tmp_path, monkeypatch):
     state.write_text('{"skin": "s", "trail": null}')
     gnome.set_trail_enabled(False)
     assert gnome.trail_problem() is None
+
+
+def alpha_at(image, x):
+    return image.getpixel((x, image.height // 2))[3]
+
+
+def preview_of(tmp_path, files):
+    return render.preview(load_skin(osk(tmp_path, files)), 192, 96)
+
+
+def test_preview_shows_a_stamped_trail_fading_behind_the_cursor(tmp_path):
+    image = preview_of(tmp_path, {"cursor.png": png(), "cursortrail.png": png(2, 2)})
+    assert alpha_at(image, 144) == 255
+    assert 0 < alpha_at(image, 40) < alpha_at(image, 90) < 255
+
+
+def test_preview_builds_up_a_continuous_trail(tmp_path):
+    colour = (40, 40, 40, 100)
+    files = {
+        "cursor.png": png(colour=(0, 0, 0, 0)),
+        "cursormiddle.png": png(2, 2),
+        "cursortrail.png": png(colour=colour),
+    }
+    image = preview_of(tmp_path, files)
+    # The parts sit 38 pixels apart and are 96 wide, so only x=100 is covered by two.
+    assert alpha_at(image, 100) == pytest.approx(alpha_at(image, 120) + alpha_at(image, 40), abs=2)
+    assert alpha_at(image, 120) > alpha_at(image, 40) > 0
+
+
+def test_preview_without_a_trail_leaves_the_left_side_empty(tmp_path):
+    image = preview_of(tmp_path, {"cursor.png": png()})
+    assert alpha_at(image, 144) == 255
+    assert alpha_at(image, 40) == 0
+
+
+def test_preview_keeps_a_top_left_cursor_on_the_canvas(tmp_path):
+    ini = b"[General]\nCursorCentre: 0\n"
+    image = preview_of(tmp_path, {"cursor.png": png(), "skin.ini": ini})
+    assert alpha_at(image, 144) == 255
