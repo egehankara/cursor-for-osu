@@ -17,4 +17,4 @@ Icon=input-mouse
 Terminal=false
 Categories=Settings;Utility;
 StartupNotify=true
-StartupWMClass=io.github.xrayzack1010.OsuCursor
+StartupWMClass=io.github.egehankara.CursorForOsu

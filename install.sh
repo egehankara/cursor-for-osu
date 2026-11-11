@@ -6,7 +6,8 @@ set -euo pipefail
 source_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 app_dir="$data_home/osu-cursor/app"
-uuid="osu-cursor-trail@xrayzack1010.github.io"
+uuid="cursor-for-osu-trail@egehankara.github.io"
+old_uuid="osu-cursor-trail@xrayzack1010.github.io"  # the extension's earlier name
 extension_dir="$data_home/gnome-shell/extensions/$uuid"
 bin_dir="$HOME/.local/bin"
 
@@ -64,7 +65,7 @@ cp -r "$source_dir/osu_cursor" "$app_dir/"
 rm -rf "$app_dir/osu_cursor/__pycache__"
 cp "$source_dir/uninstall.sh" "$data_home/osu-cursor/uninstall.sh"
 
-rm -rf "$extension_dir"
+rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
 mkdir -p "$extension_dir"
 cp "$source_dir/extension/$uuid/"* "$extension_dir/"
 

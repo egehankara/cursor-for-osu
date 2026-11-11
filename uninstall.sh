@@ -9,7 +9,8 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 data_dir="$data_home/osu-cursor"
 app_dir="$data_dir/app"
-uuid="osu-cursor-trail@xrayzack1010.github.io"
+uuid="cursor-for-osu-trail@egehankara.github.io"
+old_uuid="osu-cursor-trail@xrayzack1010.github.io"  # the extension's earlier name
 extension_dir="$data_home/gnome-shell/extensions/$uuid"
 bin_dir="$HOME/.local/bin"
 
@@ -61,19 +62,20 @@ fi
 
 # Taking it out of the enabled list makes GNOME Shell stop it right away.
 gnome-extensions disable "$uuid" >/dev/null 2>&1 || true
-python3 - "$uuid" <<'EOF' 2>/dev/null || true
+gnome-extensions disable "$old_uuid" >/dev/null 2>&1 || true
+python3 - "$uuid" "$old_uuid" <<'EOF' 2>/dev/null || true
 import ast, subprocess, sys
 
-uuid = sys.argv[1]
+uuids = sys.argv[1:]
 key = ["org.gnome.shell", "enabled-extensions"]
 current = subprocess.run(["gsettings", "get", *key], check=True, capture_output=True, text=True).stdout
 enabled = ast.literal_eval(current.strip().removeprefix("@as "))
-if uuid in enabled:
-    enabled.remove(uuid)
-    subprocess.run(["gsettings", "set", *key, str(enabled)], check=True)
+remaining = [uuid for uuid in enabled if uuid not in uuids]
+if remaining != enabled:
+    subprocess.run(["gsettings", "set", *key, str(remaining)], check=True)
 EOF
 
-rm -rf "$extension_dir"
+rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
 rm -f "$bin_dir/cursor-for-osu" "$data_home/applications/cursor-for-osu.desktop"
 update-desktop-database "$data_home/applications" 2>/dev/null || true
 

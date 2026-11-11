@@ -853,3 +853,19 @@ def test_settings_survive_writes_from_several_threads(tmp_path, monkeypatch):
         thread.join()
     assert gnome._settings() == {f"key{number}": number for number in range(20)}
     assert not list(gnome.data_dir().glob(".*.tmp"))
+
+
+def test_enabling_the_extension_replaces_its_old_name(monkeypatch):
+    settings = {"enabled-extensions": f"['other@example.com', '{gnome.OLD_EXTENSION_UUIDS[0]}']"}
+
+    def fake(*args):
+        if args[0] == "get":
+            return settings[args[2]]
+        settings[args[2]] = args[3]
+        return ""
+
+    monkeypatch.setattr(gnome, "_gsettings", fake)
+    gnome.enable_extension()
+    assert settings["enabled-extensions"] == f"['other@example.com', '{gnome.EXTENSION_UUID}']"
+    gnome.enable_extension()  # already right, left alone
+    assert settings["enabled-extensions"] == f"['other@example.com', '{gnome.EXTENSION_UUID}']"

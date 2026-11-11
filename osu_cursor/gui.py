@@ -17,7 +17,7 @@ from . import gnome  # noqa: E402
 from .i18n import _  # noqa: E402
 from .skin import SkinError  # noqa: E402
 
-APP_ID = "io.github.xrayzack1010.OsuCursor"
+APP_ID = "io.github.egehankara.CursorForOsu"
 SIZE_SETTLE_MS = 300
 TOAST_MS = 3000
 SKIN_LIST_MIN_HEIGHT = 150

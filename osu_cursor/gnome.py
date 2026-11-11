@@ -20,7 +20,8 @@ from . import render, system, xcursor
 from .i18n import _
 from .skin import Skin, SkinError, read_cursor_files, skin_from_files, skin_stem
 
-EXTENSION_UUID = "osu-cursor-trail@xrayzack1010.github.io"
+EXTENSION_UUID = "cursor-for-osu-trail@egehankara.github.io"
+OLD_EXTENSION_UUIDS = ("osu-cursor-trail@xrayzack1010.github.io",)  # earlier names, turned off when installing
 THEME_PATTERN = re.compile(r"^osu-cursor-[0-9a-f]{12}$")
 THEME_MARKER = ".osu-cursor"
 NAME_ENTRY = "display-name.txt"  # the name given in the app, kept inside the archive
@@ -340,9 +341,11 @@ def enable_extension() -> None:
     enabled = ast.literal_eval(
         _gsettings("get", "org.gnome.shell", "enabled-extensions").removeprefix("@as ")
     )
-    if EXTENSION_UUID not in enabled:
-        enabled.append(EXTENSION_UUID)
-        _gsettings("set", "org.gnome.shell", "enabled-extensions", str(enabled))
+    wanted = [uuid for uuid in enabled if uuid not in OLD_EXTENSION_UUIDS]
+    if EXTENSION_UUID not in wanted:
+        wanted.append(EXTENSION_UUID)
+    if wanted != enabled:
+        _gsettings("set", "org.gnome.shell", "enabled-extensions", str(wanted))
 
 
 def _extension_info() -> dict:
