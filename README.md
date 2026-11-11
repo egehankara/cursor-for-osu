@@ -74,6 +74,8 @@ The trail behaviour is adapted from the MIT licensed [osu!](https://github.com/p
 python3 -m pytest
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
+
 ## Türkçe
 
 osu! skin'lerindeki imleci ve cursor trail'i oyunun dışında, GNOME'un her yerinde kullanır.
@@ -145,3 +147,5 @@ Trail davranışı MIT lisanslı [osu!](https://github.com/ppy/osu) kodundan uya
 ```sh
 python3 -m pytest
 ```
+
+Uygulama üzerinde nasıl çalışılacağı [CONTRIBUTING.md](CONTRIBUTING.md#türkçe) dosyasında.
