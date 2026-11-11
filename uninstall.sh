@@ -22,7 +22,17 @@ fi
 
 # Prints a message in the user's language, see osu_cursor/i18n.py.
 say() {
-    PYTHONPATH="$code_dir" python3 -m osu_cursor.i18n "$@" 2>/dev/null || printf '%s\n' "$1"
+    if command -v python3 >/dev/null 2>&1; then
+        PYTHONPATH="$code_dir" python3 -m osu_cursor.i18n "$@" 2>/dev/null
+    else
+        # Without Python there are no translations, the English text is filled in here.
+        local message="$1" pair
+        shift
+        for pair in "$@"; do
+            message="${message//\{${pair%%=*}\}/${pair#*=}}"
+        done
+        printf '%s\n' "$message"
+    fi
 }
 
 keep_data=false

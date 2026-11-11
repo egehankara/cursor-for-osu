@@ -5,17 +5,44 @@
 ## English
 
 Use the cursor and cursor trail of your osu! skins everywhere on GNOME, outside the game.
-Currently works on GNOME Shell 51 (Wayland).
+
+Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.
+
+### Requirements
+
+- GNOME Shell 51 (Wayland) for the trail. The cursor itself works on any GNOME, the trail extension
+  is only marked for the GNOME Shell version it was tested on.
+- Python 3.10 or newer, Pillow, PyGObject and libadwaita 1.5 or newer.
+
+Install the packages for your distribution:
+
+| Distribution | Command |
+| --- | --- |
+| Arch, CachyOS, Manjaro | `sudo pacman -S --needed python python-pillow python-gobject libadwaita` |
+| Ubuntu, Debian | `sudo apt install python3 python3-pil python3-gi gir1.2-adw-1` |
+| Fedora | `sudo dnf install python3 python3-pillow python3-gobject libadwaita` |
+| openSUSE | `sudo zypper install python3 python3-Pillow python3-gobject typelib-1_0-Adw-1` |
+
+`install.sh` checks for them and prints the command for your distribution if something is missing.
 
 ### Installation
 
 ```sh
+git clone https://github.com/egehankara/cursor-for-osu.git
+cd cursor-for-osu
 bash install.sh
 ```
 
 Log out and back in once after the first install, because GNOME only finds new extensions at login.
-Required packages: `python-pillow`, `python-gobject`, `libadwaita`.
-Run `bash install.sh` again to update.
+Then open **Cursor for osu!** from your applications.
+
+To update, get the new version and install again:
+
+```sh
+cd cursor-for-osu
+git pull
+bash install.sh
+```
 
 ### Uninstalling
 
@@ -79,17 +106,44 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
 ## Türkçe
 
 osu! skin'lerindeki imleci ve cursor trail'i oyunun dışında, GNOME'un her yerinde kullanır.
-Şu an GNOME Shell 51 (Wayland) için çalışır.
+
+Cursor for osu! hayran yapımı bir araçtır. ppy veya osu! tarafından yapılmamıştır ve onlarla bağlantılı değildir.
+
+### Gereksinimler
+
+- Trail için GNOME Shell 51 (Wayland). İmlecin kendisi her GNOME'da çalışır, trail eklentisi sadece
+  test edildiği GNOME Shell sürümü için işaretlidir.
+- Python 3.10 veya üstü, Pillow, PyGObject ve libadwaita 1.5 veya üstü.
+
+Paketleri dağıtımına göre kur:
+
+| Dağıtım | Komut |
+| --- | --- |
+| Arch, CachyOS, Manjaro | `sudo pacman -S --needed python python-pillow python-gobject libadwaita` |
+| Ubuntu, Debian | `sudo apt install python3 python3-pil python3-gi gir1.2-adw-1` |
+| Fedora | `sudo dnf install python3 python3-pillow python3-gobject libadwaita` |
+| openSUSE | `sudo zypper install python3 python3-Pillow python3-gobject typelib-1_0-Adw-1` |
+
+`install.sh` bunları kontrol eder, eksik bir şey varsa senin dağıtımının komutunu gösterir.
 
 ### Kurulum
 
 ```sh
+git clone https://github.com/egehankara/cursor-for-osu.git
+cd cursor-for-osu
 bash install.sh
 ```
 
 İlk kurulumdan sonra bir kez oturumu kapatıp aç, GNOME yeni eklentileri sadece girişte tanıyor.
-Gerekli paketler: `python-pillow`, `python-gobject`, `libadwaita`.
-Güncellemek için `bash install.sh`'ı tekrar çalıştır.
+Sonra uygulamalardan **Cursor for osu!**'yu aç.
+
+Güncellemek için yeni sürümü indirip tekrar kur:
+
+```sh
+cd cursor-for-osu
+git pull
+bash install.sh
+```
 
 ### Kaldırma
 
