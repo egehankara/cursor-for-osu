@@ -1,7 +1,17 @@
 [Desktop Entry]
 Type=Application
 Name=Cursor for osu!
-Comment=Skin imlecini ve trail'ini her yerde kullan
+Comment=Use your osu! skin's cursor and trail everywhere
+Comment[tr]=Skin imlecini ve trail'ini her yerde kullan
+Comment[es]=Usa el cursor y la estela de tu skin de osu! en todas partes
+Comment[pt_BR]=Use o cursor e o rastro da sua skin do osu! em qualquer lugar
+Comment[de]=Cursor und Trail deines osu!-Skins überall nutzen
+Comment[fr]=Utilisez le curseur et la traînée de votre skin osu! partout
+Comment[ru]=Курсор и шлейф вашего скина osu! повсюду
+Comment[pl]=Używaj kursora i smugi swojej skórki osu! wszędzie
+Comment[ja]=osu! スキンのカーソルとトレイルをどこでも使う
+Comment[zh_CN]=在任何地方使用 osu! 皮肤的光标和拖尾
+Keywords=osu;cursor;skin;trail;mouse;
 Exec=cursor-for-osu
 Icon=input-mouse
 Terminal=false

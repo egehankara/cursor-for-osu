@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from osu_cursor import gnome, render, xcursor
+from osu_cursor import gnome, render, system, xcursor
 from osu_cursor.skin import SkinError, load_skin, parse_general
 
 
@@ -187,12 +187,12 @@ def test_library_lists_added_skins_by_name(tmp_path, monkeypatch):
 
 
 def test_an_oversized_cursor_says_so(tmp_path):
-    with pytest.raises(SkinError, match="çok büyük .4097×1"):
+    with pytest.raises(SkinError, match="too large .4097×1"):
         load_skin(osk(tmp_path, {"cursor.png": png(4097, 1)}))
 
 
 def test_a_missing_cursor_still_says_it_is_missing(tmp_path):
-    with pytest.raises(SkinError, match="cursor.png yok"):
+    with pytest.raises(SkinError, match="has no cursor.png"):
         load_skin(osk(tmp_path, {"hitcircle.png": png()}))
 
 
@@ -285,7 +285,7 @@ def test_a_huge_cursor_is_refused_before_it_is_resized(tmp_path, monkeypatch):
     skin = spinning(tmp_path, 16)
     monkeypatch.setattr(render, "MAX_CURSOR_BYTES", 16)
     monkeypatch.setattr(render, "_scaled", lambda *_args: pytest.fail("resized anyway"))
-    with pytest.raises(SkinError, match="çok büyük"):
+    with pytest.raises(SkinError, match="too large"):
         render.build_frames(skin, 1.0)
 
 
@@ -294,7 +294,7 @@ def test_a_refused_cursor_leaves_the_applied_skin_alone(tmp_path, desktop, monke
     theme = desktop["cursor-theme"]
     monkeypatch.setattr(render, "MAX_CURSOR_BYTES", 16)
 
-    with pytest.raises(SkinError, match="çok büyük"):
+    with pytest.raises(SkinError, match="too large"):
         gnome.apply_skin(osk(tmp_path, {"cursor.png": png(32, 32)}, "b.osk"), 1.0)
 
     assert desktop["cursor-theme"] == theme
@@ -326,7 +326,7 @@ def test_add_refuses_the_same_skin_twice(tmp_path, monkeypatch):
     source = library(tmp_path, monkeypatch)
     files = {"cursor.png": png()}
     gnome.add_skin(osk(source, files, "a.osk"))
-    with pytest.raises(SkinError, match="zaten listede"):
+    with pytest.raises(SkinError, match="already in the list"):
         gnome.add_skin(osk(source, files, "b.osk"))
 
 
@@ -375,8 +375,8 @@ def test_exports_are_added_once_as_cursor_files_only(tmp_path, monkeypatch):
     (exports / "notes.txt").write_text("skip me")
     before = original.read_bytes()
 
-    assert gnome.add_exported_skins() == 2
-    assert gnome.add_exported_skins() == 0
+    assert gnome.add_new_exports() == 2
+    assert gnome.add_new_exports() == 0
 
     assert sorted(path.name for path in gnome.skins_dir().iterdir()) == ["a", "b"]
     assert original.read_bytes() == before
@@ -385,7 +385,51 @@ def test_exports_are_added_once_as_cursor_files_only(tmp_path, monkeypatch):
 
 def test_add_exports_without_an_exports_folder(tmp_path, monkeypatch):
     library(tmp_path, monkeypatch)
-    assert gnome.add_exported_skins() == 0
+    assert gnome.add_new_exports() == 0
+
+
+def test_a_removed_export_does_not_come_back(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    exports = gnome.exports_dir()
+    exports.mkdir(parents=True)
+    osk(exports, {"cursor.png": png()}, "a.osk")
+    assert gnome.add_new_exports() == 1
+
+    gnome.remove_skin(gnome.skins_dir() / "a")
+    assert gnome.add_new_exports() == 0
+    assert not any(gnome.skins_dir().iterdir())
+
+    # Adding all of them brings it back.
+    assert gnome.add_new_exports(everything=True) == 1
+    assert gnome.add_new_exports(everything=True) == 0
+    gnome.remove_skin(gnome.skins_dir() / "a")
+
+    # Exporting it again makes a new file, which counts as a new export.
+    osk(exports, {"cursor.png": png()}, "a (1).osk")
+    assert gnome.add_new_exports() == 1
+
+
+def test_an_unfinished_export_is_tried_again(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    exports = gnome.exports_dir()
+    exports.mkdir(parents=True)
+    (exports / "a.osk").write_bytes(b"still being written")
+    assert gnome.add_new_exports() == 0
+
+    osk(exports, {"cursor.png": png()}, "a.osk")
+    assert gnome.add_new_exports() == 1
+
+
+def test_deleted_exports_are_forgotten(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    exports = gnome.exports_dir()
+    exports.mkdir(parents=True)
+    osk(exports, {"cursor.png": png()}, "a.osk").unlink()
+    osk(exports, {"cursor.png": png()}, "b.osk")
+    gnome.add_new_exports()
+    (exports / "b.osk").unlink()
+    gnome.add_new_exports()
+    assert gnome._settings()["seen_exports"] == []
 
 
 def test_rename_changes_the_listed_name_only(tmp_path, monkeypatch):
@@ -401,7 +445,7 @@ def test_rename_changes_the_listed_name_only(tmp_path, monkeypatch):
     assert (after.name, after.path, after.key) == ("Yeni isim", before.path, before.key)
     with zipfile.ZipFile(original) as untouched:
         assert gnome.NAME_ENTRY not in untouched.namelist()
-    with pytest.raises(SkinError, match="zaten listede"):
+    with pytest.raises(SkinError, match="already in the list"):
         gnome.add_skin(original)
 
 
@@ -409,7 +453,7 @@ def test_rename_refuses_empty_names_and_outside_files(tmp_path, monkeypatch):
     source = library(tmp_path, monkeypatch)
     original = osk(source, {"cursor.png": png()}, "a.osk")
     gnome.add_skin(original)
-    with pytest.raises(SkinError, match="boş"):
+    with pytest.raises(SkinError, match="empty"):
         gnome.rename_skin(gnome.library_skins()[0].path, "   ")
     with pytest.raises(SkinError):
         gnome.rename_skin(original, "x")
@@ -467,7 +511,7 @@ def test_a_folder_and_an_osk_of_one_skin_count_as_the_same(tmp_path, monkeypatch
     source = library(tmp_path, monkeypatch)
     files = {"cursor.png": png()}
     gnome.add_skin(skin_folder(source, "folder", files))
-    with pytest.raises(SkinError, match="zaten listede"):
+    with pytest.raises(SkinError, match="already in the list"):
         gnome.add_skin(osk(source, files, "a.osk"))
 
 
@@ -597,10 +641,10 @@ def test_turning_the_trail_off_updates_the_running_state(tmp_path, monkeypatch):
     ("info", "expected"),
     [
         ({"state": 1.0}, None),
-        ({"state": 4.0}, "uyumlu değil"),
-        ({"state": 3.0, "error": "patladı"}, "patladı"),
-        ({"state": 2.0}, "Eklentiler"),
-        ({}, "oturumu kapatıp"),
+        ({"state": 4.0}, "doesn't support"),
+        ({"state": 3.0, "error": "boom"}, "boom"),
+        ({"state": 2.0}, "Extensions app"),
+        ({}, "Log out"),
     ],
 )
 def test_trail_problem_names_the_extension_state(tmp_path, monkeypatch, info, expected):
@@ -659,3 +703,153 @@ def test_preview_keeps_a_top_left_cursor_on_the_canvas(tmp_path):
     ini = b"[General]\nCursorCentre: 0\n"
     image = preview_of(tmp_path, {"cursor.png": png(), "skin.ini": ini})
     assert alpha_at(image, 144) == 255
+
+
+def test_watching_exports_is_on_until_turned_off(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    assert gnome.watch_exports_enabled()
+    gnome.set_watch_exports_enabled(False)
+    assert not gnome.watch_exports_enabled()
+    gnome.set_watch_exports_enabled(True)
+    assert gnome.watch_exports_enabled()
+
+
+def test_xcursor_reads_back_what_it_writes():
+    small = xcursor.Frame(Image.new("RGBa", (2, 1), (10, 20, 30, 255)), 1, 0, 50)
+    large = xcursor.Frame(Image.new("RGBa", (4, 4), (0, 0, 0, 128)), 3, 3, 0)
+    images = xcursor.decode(xcursor.encode_sized([(24, small), (48, large)]))
+    assert [(size, frame.image.size, frame.hot_x, frame.delay_ms) for size, frame in images] == [
+        (24, (2, 1), 1, 50),
+        (48, (4, 4), 3, 0),
+    ]
+    assert images[0][1].image.tobytes() == small.image.tobytes()
+
+
+@pytest.mark.parametrize("data", [b"", b"nope", xcursor.encode([xcursor.Frame(Image.new("RGBa", (8, 8)), 0, 0)], 24)[:-10]])
+def test_xcursor_refuses_broken_files(data):
+    with pytest.raises(ValueError):
+        xcursor.decode(data)
+
+
+def test_skin_colour_finds_the_main_colour_and_greys():
+    red_ring = Image.new("RGBA", (16, 16), (255, 255, 255, 255))
+    red_ring.paste((220, 30, 30, 255), (0, 0, 16, 6))
+    hue, saturation = system.skin_colour(red_ring)
+    assert hue < 0.05 or hue > 0.95
+    assert saturation > 0.5
+    assert system.skin_colour(Image.new("RGBA", (8, 8), (200, 200, 200, 255))) == (0.0, 0.0)
+    assert system.skin_colour(Image.new("RGBA", (8, 8))) == (0.0, 0.0)
+
+
+def test_tint_keeps_dark_and_light_parts_apart():
+    image = Image.new("RGBA", (2, 1))
+    image.putpixel((0, 0), (0, 0, 0, 255))
+    image.putpixel((1, 0), (255, 255, 255, 255))
+    tinted = system.tint(image.convert("RGBa"), 0.6, 0.9).convert("RGBA")
+    dark, light = tinted.getpixel((0, 0)), tinted.getpixel((1, 0))
+    assert dark[2] > dark[0] and light[2] > light[0]  # both blue
+    assert sum(light[:3]) - sum(dark[:3]) > 400
+    assert dark[3] == light[3] == 255
+
+
+def cursor_theme(root: Path, name: str, shapes: dict[str, str], inherits: str = ""):
+    """A cursor theme with plain files for the shapes, and symlinks for name -> target entries."""
+    cursors = root / name / "cursors"
+    cursors.mkdir(parents=True)
+    (root / name / "index.theme").write_text(f"[Icon Theme]\nName={name}\nInherits={inherits}\n")
+    frame = xcursor.Frame(Image.new("RGBa", (4, 4), (0, 0, 0, 255)), 1, 1)
+    for shape, target in shapes.items():
+        if target:
+            (cursors / shape).symlink_to(target)
+        else:
+            (cursors / shape).write_bytes(xcursor.encode_sized([(24, frame), (48, frame)]))
+
+
+@pytest.fixture
+def themes(tmp_path, desktop, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("XDG_DATA_DIRS", str(tmp_path / "system"))
+    icons = tmp_path / "data" / "icons"
+    cursor_theme(icons, "Base", {"default": "", "move": "default", "ew-resize": ""})
+    cursor_theme(icons, "Mine", {"text": "", "xterm": "text"}, inherits="Base")
+    desktop["cursor-theme"] = "'Mine'"
+    return desktop
+
+
+def test_system_cursors_come_from_the_previous_theme(tmp_path, themes):
+    skin = osk(tmp_path, {"cursor.png": png(40, 40, (30, 60, 220, 255))})
+    gnome.apply_skin(skin, 1.0)
+    cursors = gnome.icons_dir() / themes["cursor-theme"] / "cursors"
+    assert (cursors / "text").resolve() == cursors / "left_ptr"
+
+    gnome.set_keep_system_cursors(True)
+    cursors = gnome.icons_dir() / themes["cursor-theme"] / "cursors"
+    assert not (cursors / "text").is_symlink()
+    assert (cursors / "xterm").resolve() == cursors / "text"
+    assert not (cursors / "ew-resize").is_symlink()  # inherited from Base
+    assert (cursors / "move").resolve() == cursors / "left_ptr"  # Base draws it as its arrow
+    assert (cursors / "pointer").resolve() == cursors / "left_ptr"
+    images = xcursor.decode((cursors / "text").read_bytes())
+    assert [size for size, _frame in images] == [24, 48]
+    red, _green, blue, _alpha = images[0][1].image.convert("RGBA").getpixel((0, 0))
+    assert blue > red  # coloured like the blue skin
+
+    # The extension draws no trail behind the kept shapes, it knows the skin cursor by these.
+    own = xcursor.decode((cursors / "left_ptr").read_bytes())[0][1]
+    state = json.loads((gnome.data_dir() / "state.json").read_text())
+    assert state["skin_cursor"] == {
+        "width": own.image.width,
+        "height": own.image.height,
+        "hot_x": own.hot_x,
+        "hot_y": own.hot_y,
+    }
+
+    gnome.set_keep_system_cursors(False)
+    cursors = gnome.icons_dir() / themes["cursor-theme"] / "cursors"
+    assert (cursors / "text").resolve() == cursors / "left_ptr"
+    assert json.loads((gnome.data_dir() / "state.json").read_text())["skin_cursor"] is None
+
+
+def test_system_cursors_setting_without_a_skin_only_saves(themes):
+    assert not gnome.keep_system_cursors()
+    assert gnome.set_keep_system_cursors(True) is None
+    assert gnome.keep_system_cursors()
+
+
+def test_osu_folder_follows_storage_ini_and_flatpak(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    default = tmp_path / "data" / "osu"
+    assert gnome.osu_dir() == default
+
+    flatpak = tmp_path / "home" / ".var/app/sh.ppy.osu/data/osu"
+    flatpak.mkdir(parents=True)
+    assert gnome.osu_dir() == flatpak  # only the Flatpak build is installed
+
+    default.mkdir(parents=True)
+    assert gnome.osu_dir() == default
+
+    moved = tmp_path / "games" / "osu data"
+    (default / "storage.ini").write_text(f"FullPath = {moved}\n")
+    assert gnome.osu_dir() == default  # the folder it names doesn't exist
+    moved.mkdir(parents=True)
+    assert gnome.osu_dir() == moved
+    assert gnome.exports_dir() == moved / "exports"
+    (moved / "game.ini").write_text("GameplayCursorSize = 0.7\n")
+    assert gnome.game_cursor_size() == 0.7
+
+
+def test_settings_survive_writes_from_several_threads(tmp_path, monkeypatch):
+    import threading
+
+    library(tmp_path, monkeypatch)
+    threads = [
+        threading.Thread(target=gnome._save_setting, args=(f"key{number}", number))
+        for number in range(20)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert gnome._settings() == {f"key{number}": number for number in range(20)}
+    assert not list(gnome.data_dir().glob(".*.tmp"))

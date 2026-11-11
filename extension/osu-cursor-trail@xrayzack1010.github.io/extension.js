@@ -175,6 +175,7 @@ class Trail {
         this._cursorId = this._tracker.connect('cursor-changed', () => this._updateCursorVisible());
         this._fullscreenId = global.display.connect('in-fullscreen-changed', () => this._hideIfSuppressed());
         this._cursorVisible = true;
+        this._skinCursor = null;
         this._updateCursorVisible();
 
         const directory = Gio.File.new_for_path(dataDir);
@@ -220,9 +221,12 @@ class Trail {
         this._stop();
         this._last = null;
         this._current = null;
+        this._skinCursor = null;
         try {
             const [, stateBytes] = GLib.file_get_contents(this._statePath);
             const state = JSON.parse(new TextDecoder().decode(stateBytes));
+            this._skinCursor = state.skin_cursor ?? null;
+            this._updateCursorVisible();
             if (state.trail && state.trail_enabled !== false) {
                 this._applyTrail(state.trail);
                 return;
@@ -283,11 +287,24 @@ class Trail {
     }
 
     _updateCursorVisible() {
-        this._cursorVisible = this._tracker.get_sprite() !== null;
+        const sprite = this._tracker.get_sprite();
+        this._cursorVisible = sprite !== null && this._showsSkinCursor(sprite);
         this._hideIfSuppressed();
     }
 
-    // No trail over fullscreen windows, or while an application hides the cursor.
+    // When system cursors are kept, text, resize and the like get no trail.
+    // The skin cursor is told apart by its size and hotspot.
+    _showsSkinCursor(sprite) {
+        const own = this._skinCursor;
+        if (!own)
+            return true;
+        const [hotX, hotY] = this._tracker.get_hot();
+        return sprite.get_width() === own.width && sprite.get_height() === own.height &&
+            hotX === own.hot_x && hotY === own.hot_y;
+    }
+
+    // No trail over fullscreen windows, while an application hides the cursor
+    // or while a kept system cursor is shown.
     _hideIfSuppressed() {
         if (this._cursorVisible && !Main.layoutManager.currentMonitor?.inFullscreen)
             return false;

@@ -14,6 +14,8 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
+from .i18n import _
+
 MAX_FILE_BYTES = 32 * 1024 * 1024
 MAX_IMAGE_SIDE = 4096
 CURSOR_FILES = frozenset(
@@ -67,7 +69,7 @@ def read_cursor_files(path: str | Path) -> dict[str, bytes]:
     """Return the skin files we use, keyed by lowercase name."""
     path = Path(path)
     if not path.exists():
-        raise SkinError(f"{path} bulunamadı.")
+        raise SkinError(_("{path} was not found.").format(path=path))
 
     if path.is_dir():
         files = {}
@@ -80,7 +82,7 @@ def read_cursor_files(path: str | Path) -> dict[str, bytes]:
     try:
         archive = zipfile.ZipFile(path)
     except (zipfile.BadZipFile, OSError) as error:
-        raise SkinError(f"{path.name} geçerli bir .osk dosyası değil.") from error
+        raise SkinError(_("{name} is not a valid .osk file.").format(name=path.name)) from error
 
     with archive:
         folders: dict[str, dict[str, zipfile.ZipInfo]] = {}
@@ -93,7 +95,7 @@ def read_cursor_files(path: str | Path) -> dict[str, bytes]:
         # Some skins are zipped with an extra parent folder around them.
         candidates = [f for f, names in folders.items() if _has_cursor(names)]
         if not candidates:
-            raise SkinError("Bu skin'de cursor.png yok.")
+            raise SkinError(_("This skin has no cursor.png."))
         chosen = folders[min(candidates, key=lambda f: (f.count("/"), f))]
 
         files = {}
@@ -186,10 +188,11 @@ def skin_from_files(files: dict[str, bytes], fallback_name: str) -> Skin:
         if oversized:
             width, height = oversized
             raise SkinError(
-                f"Bu skin'in cursor.png dosyası çok büyük ({width}×{height}, "
-                f"sınır {MAX_IMAGE_SIDE}×{MAX_IMAGE_SIDE})."
+                _("This skin's cursor.png is too large ({width}×{height}, the limit is {limit}×{limit}).").format(
+                    width=width, height=height, limit=MAX_IMAGE_SIDE
+                )
             )
-        raise SkinError("Bu skin'de okunabilir bir cursor.png yok.")
+        raise SkinError(_("This skin has no readable cursor.png."))
 
     general = parse_general(files["skin.ini"]) if "skin.ini" in files else {}
     return Skin(

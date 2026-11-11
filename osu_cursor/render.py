@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from PIL import Image, ImageChops
 
+from .i18n import _
 from .skin import Skin, SkinError, Sprite
 from .xcursor import Frame
 
@@ -108,7 +109,7 @@ def build_frames(skin: Skin, scale: float) -> list[Frame]:
     # Measured first, so a huge cursor is refused before any memory is used.
     sizes = [_scaled_size(sprite, scale) for sprite in (skin.cursor, skin.middle) if sprite]
     if max(width * height * 4 for width, height in sizes) > MAX_CURSOR_BYTES:
-        raise SkinError("Bu skin'in imleci bu boyutta çok büyük. Cursor boyutunu küçültüp tekrar dene.")
+        raise SkinError(_("This skin's cursor is too large at this size. Make the cursor size smaller and try again."))
 
     width = max(size[0] for size in sizes)
     height = max(size[1] for size in sizes)
