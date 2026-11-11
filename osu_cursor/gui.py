@@ -745,6 +745,7 @@ def run() -> int:
 
 
 def _add_style(_application: Adw.Application) -> None:
+    Gtk.Window.set_default_icon_name(APP_ID)  # installed by install.sh, named after the app
     css = Gtk.CssProvider()
     css.load_from_string("list.no-match { background: none; }")
     Gtk.StyleContext.add_provider_for_display(

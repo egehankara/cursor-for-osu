@@ -10,6 +10,7 @@ uuid="cursor-for-osu-trail@egehankara.github.io"
 old_uuid="osu-cursor-trail@xrayzack1010.github.io"  # the extension's earlier name
 extension_dir="$data_home/gnome-shell/extensions/$uuid"
 bin_dir="$HOME/.local/bin"
+icon_dir="$data_home/icons/hicolor"
 
 # Prints a message in the user's language, see osu_cursor/i18n.py.
 say() {
@@ -80,6 +81,13 @@ chmod +x "$bin_dir/cursor-for-osu"
 sed "s|^Exec=cursor-for-osu\$|Exec=\"$bin_dir/cursor-for-osu\"|" \
     "$source_dir/data/cursor-for-osu.desktop" > "$data_home/applications/cursor-for-osu.desktop"
 update-desktop-database "$data_home/applications" 2>/dev/null || true
+
+# The app icon and its one-colour version for small sizes.
+for icon in "$source_dir"/data/icons/hicolor/*/apps/*.svg; do
+    target="$icon_dir/${icon#"$source_dir/data/icons/hicolor/"}"
+    mkdir -p "$(dirname "$target")"
+    cp "$icon" "$target"
+done
 
 # GNOME only discovers new extensions at login, so turn it on for the next one.
 PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.gnome import enable_extension; enable_extension()' 2>/dev/null ||

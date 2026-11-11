@@ -869,3 +869,15 @@ def test_enabling_the_extension_replaces_its_old_name(monkeypatch):
     assert settings["enabled-extensions"] == f"['other@example.com', '{gnome.EXTENSION_UUID}']"
     gnome.enable_extension()  # already right, left alone
     assert settings["enabled-extensions"] == f"['other@example.com', '{gnome.EXTENSION_UUID}']"
+
+
+def test_the_desktop_entry_icon_is_in_the_project():
+    root = Path(__file__).resolve().parent.parent
+    entry = (root / "data" / "cursor-for-osu.desktop").read_text()
+    icon = next(line.split("=", 1)[1] for line in entry.splitlines() if line.startswith("Icon="))
+    icons = root / "data" / "icons" / "hicolor"
+    assert (icons / "scalable" / "apps" / f"{icon}.svg").is_file()
+    assert (icons / "symbolic" / "apps" / f"{icon}-symbolic.svg").is_file()
+    from osu_cursor.gui import APP_ID
+
+    assert icon == APP_ID  # the window looks its icon up by the app ID

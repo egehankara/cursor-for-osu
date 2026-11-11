@@ -13,6 +13,7 @@ uuid="cursor-for-osu-trail@egehankara.github.io"
 old_uuid="osu-cursor-trail@xrayzack1010.github.io"  # the extension's earlier name
 extension_dir="$data_home/gnome-shell/extensions/$uuid"
 bin_dir="$HOME/.local/bin"
+icon_dir="$data_home/icons/hicolor"
 
 # Run from the source folder or from the copy next to the installed app.
 if [ -d "$script_dir/osu_cursor" ]; then
@@ -77,6 +78,8 @@ EOF
 
 rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
 rm -f "$bin_dir/cursor-for-osu" "$data_home/applications/cursor-for-osu.desktop"
+rm -f "$icon_dir/scalable/apps/io.github.egehankara.CursorForOsu.svg" \
+    "$icon_dir/symbolic/apps/io.github.egehankara.CursorForOsu-symbolic.svg"
 update-desktop-database "$data_home/applications" 2>/dev/null || true
 
 # Only the themes this app made, they carry a marker file.

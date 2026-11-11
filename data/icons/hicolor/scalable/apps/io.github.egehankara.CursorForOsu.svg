@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>Cursor for osu!</title>
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="#000000"/>
+  <circle cx="26.0" cy="102.0" r="2.8" fill="#ffffff"/>
+  <circle cx="29.2" cy="88.1" r="3.6" fill="#ffffff"/>
+  <circle cx="34.7" cy="75.1" r="4.4" fill="#ffffff"/>
+  <circle cx="43.3" cy="63.8" r="5.2" fill="#ffffff"/>
+  <circle cx="55.0" cy="56.0" r="6.0" fill="#ffffff"/>
+  <circle cx="82" cy="46" r="17" fill="none" stroke="#ffffff" stroke-width="7"/>
+  <path d="M76.49,40.49 L81.89,53.49 L83.81,47.84 L89.49,45.89 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+</svg>

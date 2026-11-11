@@ -1,5 +1,9 @@
 # Cursor for osu!
 
+<p align="center">
+  <img src="data/icons/hicolor/scalable/apps/io.github.egehankara.CursorForOsu.svg" width="128" alt="Cursor for osu! icon">
+</p>
+
 [English](#english) · [Türkçe](#türkçe)
 
 ## English
