@@ -66,7 +66,7 @@ Spinning skins (`CursorRotate`) are shown still, because animated cursors on GNO
 ### License
 
 Cursor for osu! is released under the [MIT License](LICENSE). The trail behaviour is adapted from the MIT licensed [osu!](https://github.com/ppy/osu) code
-(Copyright (c) ppy Pty Ltd). Skin images must not be added to this repository, they belong to their creators.
+(Copyright (c) ppy Pty Ltd), its notice is in [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES). Skin images must not be added to this repository, they belong to their creators.
 
 ### Tests
 
@@ -140,7 +140,7 @@ Dönen skinler (`CursorRotate`) sabit gösterilir, çünkü GNOME'da animasyonlu
 ### Lisans
 
 Cursor for osu! [MIT Lisansı](LICENSE) ile yayınlanır. Trail davranışı MIT lisanslı [osu!](https://github.com/ppy/osu) kodundan uyarlanmıştır
-(Copyright (c) ppy Pty Ltd). Skin görselleri bu repoya konmamalıdır, hakları yapımcılarına aittir.
+(Copyright (c) ppy Pty Ltd), lisans notu [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES) dosyasındadır. Skin görselleri bu repoya konmamalıdır, hakları yapımcılarına aittir.
 
 ### Test
 
