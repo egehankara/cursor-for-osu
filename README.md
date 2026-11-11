@@ -63,9 +63,9 @@ cursor-for-osu uninstall
 Growing the cursor on click (`CursorExpand`) is not supported, because a cursor theme can't react to clicks.
 Spinning skins (`CursorRotate`) are shown still, because animated cursors on GNOME stall when switching skins and jump when the cursor shape changes.
 
-### License note
+### License
 
-The trail behaviour is adapted from the MIT licensed [osu!](https://github.com/ppy/osu) code
+Cursor for osu! is released under the [MIT License](LICENSE). The trail behaviour is adapted from the MIT licensed [osu!](https://github.com/ppy/osu) code
 (Copyright (c) ppy Pty Ltd). Skin images must not be added to this repository, they belong to their creators.
 
 ### Tests
@@ -137,9 +137,9 @@ cursor-for-osu uninstall
 Tıklayınca imlecin büyümesi (`CursorExpand`) desteklenmiyor, çünkü imleç teması tıklamaya tepki veremez.
 Dönen skinler (`CursorRotate`) sabit gösterilir, çünkü GNOME'da animasyonlu imleçler skin değişiminde takılıyor ve imleç şekli değişince açısı atlıyor.
 
-### Lisans notu
+### Lisans
 
-Trail davranışı MIT lisanslı [osu!](https://github.com/ppy/osu) kodundan uyarlanmıştır
+Cursor for osu! [MIT Lisansı](LICENSE) ile yayınlanır. Trail davranışı MIT lisanslı [osu!](https://github.com/ppy/osu) kodundan uyarlanmıştır
 (Copyright (c) ppy Pty Ltd). Skin görselleri bu repoya konmamalıdır, hakları yapımcılarına aittir.
 
 ### Test
