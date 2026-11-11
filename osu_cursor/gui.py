@@ -183,7 +183,11 @@ class Window(Adw.ApplicationWindow):
         self._watch_switch.connect("notify::active", self._on_watch_toggled)
         watch_row = Adw.ActionRow(
             title=_("Watch osu! exports"),
-            subtitle=_("Skins you export from the game are added to the list on their own"),
+            subtitle=(
+                _("Skins you export from the game are added to the list on their own")
+                if gnome.osu_dir().is_dir()
+                else _("osu!lazer was not found. Exports are added once it is installed.")
+            ),
             tooltip_text=_(
                 "While the app is open it watches osu!lazer's exports folder ({folder}) "
                 "and adds each skin you export to the list.\n"
@@ -540,7 +544,11 @@ class Window(Adw.ApplicationWindow):
             self._add(chosen.get_path())
 
     def _on_add_all_exports(self, _button) -> None:
-        if self._is_free():
+        if not gnome.osu_dir().is_dir():
+            self._toast(_("osu!lazer was not found on this computer."))
+        elif not gnome.exports_dir().is_dir():
+            self._toast(_("You haven't exported any skins from osu!lazer yet."))
+        elif self._is_free():
             self._run(lambda: gnome.add_new_exports(everything=True), _all_exports_message, self._load_skins)
 
     def _on_open_folder(self, _button) -> None:
