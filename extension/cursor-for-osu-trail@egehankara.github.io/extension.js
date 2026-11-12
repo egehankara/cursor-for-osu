@@ -303,17 +303,43 @@ class Trail {
             hotX === own.hot_x && hotY === own.hot_y;
     }
 
-    // No trail over fullscreen windows, while an application hides the cursor
-    // or while a kept system cursor is shown.
+    // No trail over fullscreen windows. While an application hides the cursor
+    // or a kept system cursor is shown, the trail stops growing and fades out.
     _hideIfSuppressed() {
-        if (this._cursorVisible && !Main.layoutManager.currentMonitor?.inFullscreen)
+        if (Main.layoutManager.currentMonitor?.inFullscreen) {
+            // Motion keeps arriving during a fullscreen game, so only clean up once.
+            if (this._actor.visible)
+                this._stop();
+            this._last = null;
+            this._current = null;
+            return true;
+        }
+        if (this._cursorVisible)
             return false;
-        // Motion keeps arriving during a fullscreen game, so only clean up once.
-        if (this._actor.visible)
-            this._stop();
+        if (this._last || this._current)
+            this._fadeOut();
+        return true;
+    }
+
+    // Draws the trail up to where the cursor changed shape, then lets the parts
+    // already on screen age out instead of wiping them at once.
+    _fadeOut() {
+        if (this._actor.hasConfig && this._actor.visible) {
+            const point = this._pointer();
+            if (this._actor.config.disjoint) {
+                this._current = {x: point.x, y: point.y};
+                this._stampDisjoint(this._actor.clock, this._actor.config.fade);
+            } else {
+                this._addInterpolated(point.x, point.y);
+            }
+            // A resting trail has its clock stopped, so it must run again to fade.
+            this._start();
+        }
+        this._moved = false;
         this._last = null;
         this._current = null;
-        return true;
+        // The next trail starts where the cursor comes back, not from here.
+        this._stamped = null;
     }
 
     // A mouse can report a thousand times a second, but only one position per
@@ -425,7 +451,8 @@ class Trail {
         if (alive === 0) {
             this._timeline.stop();
             this._actor.hide();
-        } else if (config.disjoint && clock - this._lastMotion > config.fade + DISJOINT_SEPARATION_MS) {
+        } else if (config.disjoint && this._current &&
+            clock - this._lastMotion > config.fade + DISJOINT_SEPARATION_MS) {
             // A resting cursor keeps a steady stack of parts under it, which never
             // changes, so the clock can stop and the screen can go idle.
             this._timeline.stop();
