@@ -55,7 +55,9 @@ bash install.sh
 
 Run `bash install.sh` from a Plasma Wayland session with the Python and GTK dependencies above.
 Theme changes use `plasma-apply-cursortheme`, `kreadconfig6`, `kwriteconfig6`, `gdbus` and `kscreen-doctor`.
-Use these commands to install the extra packages and build the KWin effect on Kubuntu 26.04.
+Use these commands to install the extra packages and build the KWin effect.
+
+On Kubuntu 26.04:
 
 ```sh
 sudo apt install plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
@@ -66,13 +68,24 @@ ctest --test-dir "$build_dir" --output-on-failure
 sudo cmake --install "$build_dir"
 ```
 
+On Arch, CachyOS and Manjaro, where `qtpaths6` is not on the PATH:
+
+```sh
+sudo pacman -S --needed plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
+build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
+cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
+cmake --build "$build_dir"
+ctest --test-dir "$build_dir" --output-on-failure
+sudo cmake --install "$build_dir"
+```
+
 Enable **Cursor for osu! Trail** in Plasma System Settings under Desktop Effects. If the effect does
 not appear after installation, log out and back in. The app's trail switch controls drawing after
 the effect is enabled. The theme also works while the effect is disabled.
 
-The effect targets the KWin 6.6 series. Trail drawing was tested on KWin 6.6.7 in a nested
-Wayland session using QPainter. Build it against the installed KWin version and rebuild it
-after a KWin update.
+The effect builds against KWin 6.6 and newer, including 6.8. It was tested on CachyOS with
+Plasma 6 on Wayland, and on KWin 6.6.7 in a nested Wayland session. Build it against the
+installed KWin version and rebuild it after a KWin update.
 
 ### Uninstalling
 
@@ -89,6 +102,8 @@ installed module, disable **Cursor for osu! Trail** in Desktop Effects and remov
 
 ```sh
 sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
+# Arch, CachyOS, Manjaro:
+sudo rm -- "$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
 ```
 
 ### Languages
@@ -189,7 +204,9 @@ bash install.sh
 
 Yukarıdaki Python ve GTK bağımlılıklarıyla `bash install.sh` komutunu Plasma Wayland oturumunda çalıştır.
 Tema değişiklikleri için `plasma-apply-cursortheme`, `kreadconfig6`, `kwriteconfig6`, `gdbus` ve `kscreen-doctor` kullanılır.
-Kubuntu 26.04'te ek paketleri kurmak ve KWin efektini derlemek için şu komutları çalıştır.
+Ek paketleri kurmak ve KWin efektini derlemek için şu komutları çalıştır.
+
+Kubuntu 26.04'te:
 
 ```sh
 sudo apt install plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
@@ -200,13 +217,24 @@ ctest --test-dir "$build_dir" --output-on-failure
 sudo cmake --install "$build_dir"
 ```
 
+Arch, CachyOS ve Manjaro'da (`qtpaths6` PATH'te olmadığı için):
+
+```sh
+sudo pacman -S --needed plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
+build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
+cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
+cmake --build "$build_dir"
+ctest --test-dir "$build_dir" --output-on-failure
+sudo cmake --install "$build_dir"
+```
+
 Plasma Sistem Ayarları'nda Masaüstü Efektleri bölümünden **osu! İmleç İzi** efektini etkinleştir.
 Kurulumdan sonra efekt listede görünmezse oturumu kapatıp yeniden aç. Efekt etkinleştirildikten sonra
 izi uygulamanın trail anahtarından açıp kapatabilirsin. Efekt kapalıyken imleç teması kullanılabilir.
 
-Efekt KWin 6.6 serisini hedefler. İmleç izi KWin 6.6.7'de, QPainter kullanan iç içe bir Wayland
-oturumunda test edildi. Efekti makinedeki KWin sürümüne karşı derle ve KWin güncellendiğinde
-yeniden derle.
+Efekt KWin 6.6 ve sonrasıyla, 6.8 dahil, derlenir. CachyOS'ta Plasma 6 Wayland oturumunda ve
+KWin 6.6.7'de iç içe bir Wayland oturumunda test edildi. Efekti makinedeki KWin sürümüne karşı
+derle ve KWin güncellendiğinde yeniden derle.
 
 ### Kaldırma
 
@@ -223,6 +251,8 @@ kaldırmak için Masaüstü Efektleri'nden **osu! İmleç İzi** efektini kapat 
 
 ```sh
 sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
+# Arch, CachyOS, Manjaro:
+sudo rm -- "$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
 ```
 
 ### Diller
