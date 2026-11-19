@@ -10,7 +10,7 @@
 
 Use the cursor and cursor trail of your osu! skins on GNOME or KDE Plasma, outside the game.
 
-This KDE adaptation builds on [Cursor for osu! by egehankara](https://github.com/egehankara/cursor-for-osu).
+KDE Plasma support by [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.
 
@@ -35,8 +35,8 @@ Install the packages for your distribution:
 ### Installation
 
 ```sh
-git clone https://github.com/MehmetAkifUgur/osu-cursor-kde.git
-cd osu-cursor-kde
+git clone https://github.com/egehankara/cursor-for-osu.git
+cd cursor-for-osu
 bash install.sh
 ```
 
@@ -46,7 +46,7 @@ Then open **Cursor for osu!** from your applications.
 To update, get the new version and install again:
 
 ```sh
-cd osu-cursor-kde
+cd cursor-for-osu
 git pull
 bash install.sh
 ```
@@ -144,7 +144,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
 
 osu! skin'lerindeki imleci ve cursor trail'i oyun dışında GNOME ve KDE Plasma'da kullanır.
 
-Bu KDE uyarlaması [egehankara'nın Cursor for osu! projesini](https://github.com/egehankara/cursor-for-osu) temel alır.
+KDE Plasma desteği: [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! hayran yapımı bir araçtır. ppy veya osu! tarafından yapılmamıştır ve onlarla bağlantılı değildir.
 
@@ -169,8 +169,8 @@ Paketleri dağıtımına göre kur:
 ### Kurulum
 
 ```sh
-git clone https://github.com/MehmetAkifUgur/osu-cursor-kde.git
-cd osu-cursor-kde
+git clone https://github.com/egehankara/cursor-for-osu.git
+cd cursor-for-osu
 bash install.sh
 ```
 
@@ -180,7 +180,7 @@ Sonra uygulamalardan **Cursor for osu!**'yu aç.
 Güncellemek için yeni sürümü indirip tekrar kur:
 
 ```sh
-cd osu-cursor-kde
+cd cursor-for-osu
 git pull
 bash install.sh
 ```
