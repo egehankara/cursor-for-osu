@@ -14,36 +14,104 @@ KDE Plasma support by [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.
 
-### Requirements
+### Before you start
 
-- GNOME Shell 51 (Wayland) for the trail. The cursor itself works on any GNOME, the trail extension
-  is only marked for the GNOME Shell version it was tested on.
-- KDE Plasma 6.6 on Wayland for the Plasma integration. See [Plasma installation](#plasma-installation).
-- Python 3.10 or newer, Pillow, PyGObject and libadwaita 1.5 or newer.
+You type the install commands into a terminal. Open it from your applications: it is called
+**Terminal** or **Console** on GNOME and **Konsole** on KDE Plasma. Copy a command, paste it
+with **Ctrl+Shift+V** and press **Enter**. Commands that start with `sudo` ask for your password.
+Nothing appears on the screen while you type it, that is normal, type it and press **Enter**.
 
-Install the packages for your distribution:
+Not sure which desktop you have? Run `echo $XDG_CURRENT_DESKTOP` in the terminal. It prints
+`GNOME` or `KDE`.
 
-| Distribution | Command |
-| --- | --- |
-| Arch, CachyOS, Manjaro | `sudo pacman -S --needed python python-pillow python-gobject libadwaita` |
-| Ubuntu, Debian | `sudo apt install python3 python3-pil python3-gi gir1.2-adw-1` |
-| Fedora | `sudo dnf install python3 python3-pillow python3-gobject libadwaita` |
-| openSUSE | `sudo zypper install python3 python3-Pillow python3-gobject typelib-1_0-Adw-1` |
+### Installation on GNOME
 
-`install.sh` checks for them and prints the command for your distribution if something is missing.
+You need GNOME on Wayland. The trail is made for GNOME Shell 51, the cursor works on any GNOME.
 
-### Installation
+1. Install the packages the app needs. Pick the line for your distribution:
 
-```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
-bash install.sh
-```
+   ```sh
+   # Arch, CachyOS, Manjaro
+   sudo pacman -S --needed git python python-pillow python-gobject libadwaita
+   ```
 
-On GNOME, log out and back in once after the first install, because GNOME only finds new extensions at login.
-Then open **Cursor for osu!** from your applications.
+   ```sh
+   # Ubuntu, Debian
+   sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
+   ```
 
-To update, get the new version and install again:
+   ```sh
+   # Fedora
+   sudo dnf install git python3 python3-pillow python3-gobject libadwaita
+   ```
+
+   ```sh
+   # openSUSE
+   sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
+   ```
+
+2. Download and install the app:
+
+   ```sh
+   git clone https://github.com/egehankara/cursor-for-osu.git
+   cd cursor-for-osu
+   bash install.sh
+   ```
+
+3. Log out and log back in once, so GNOME loads the trail.
+4. Open **Cursor for osu!** from your applications and pick a skin.
+
+### Installation on KDE Plasma
+
+You need KDE Plasma 6.6 or newer on Wayland. On Plasma the trail is a small add-on for KWin,
+Plasma's window manager, that the commands in step 3 build on your computer.
+
+1. Install the packages the app and the trail need. Pick the line for your distribution:
+
+   ```sh
+   # Arch, CachyOS, Manjaro
+   sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
+   ```
+
+   ```sh
+   # Kubuntu
+   sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1 plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
+   ```
+
+2. Download and install the app:
+
+   ```sh
+   git clone https://github.com/egehankara/cursor-for-osu.git
+   cd cursor-for-osu
+   bash install.sh
+   ```
+
+3. Build and install the trail, in the same terminal:
+
+   ```sh
+   # Arch, CachyOS, Manjaro
+   cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
+   cmake --build build
+   sudo cmake --install build
+   ```
+
+   ```sh
+   # Kubuntu
+   cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
+   cmake --build build
+   sudo cmake --install build
+   ```
+
+4. Log out and log back in once.
+5. Open **System Settings**, go to **Desktop Effects** and turn on **Cursor for osu! Trail**.
+6. Open **Cursor for osu!** from your applications and pick a skin.
+
+The cursor also works with the trail turned off. The trail was tested on CachyOS with Plasma 6
+and builds with KWin 6.6 up to 6.8.
+
+### Updating
+
+Open a terminal and run:
 
 ```sh
 cd cursor-for-osu
@@ -51,41 +119,8 @@ git pull
 bash install.sh
 ```
 
-### Plasma installation
-
-Run `bash install.sh` from a Plasma Wayland session with the Python and GTK dependencies above.
-Theme changes use `plasma-apply-cursortheme`, `kreadconfig6`, `kwriteconfig6`, `gdbus` and `kscreen-doctor`.
-Use these commands to install the extra packages and build the KWin effect.
-
-On Kubuntu 26.04:
-
-```sh
-sudo apt install plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
-build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
-cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build "$build_dir"
-ctest --test-dir "$build_dir" --output-on-failure
-sudo cmake --install "$build_dir"
-```
-
-On Arch, CachyOS and Manjaro, where `qtpaths6` is not on the PATH:
-
-```sh
-sudo pacman -S --needed plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
-build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
-cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build "$build_dir"
-ctest --test-dir "$build_dir" --output-on-failure
-sudo cmake --install "$build_dir"
-```
-
-Enable **Cursor for osu! Trail** in Plasma System Settings under Desktop Effects. If the effect does
-not appear after installation, log out and back in. The app's trail switch controls drawing after
-the effect is enabled. The theme also works while the effect is disabled.
-
-The effect builds against KWin 6.6 and newer, including 6.8. It was tested on CachyOS with
-Plasma 6 on Wayland, and on KWin 6.6.7 in a nested Wayland session. Build it against the
-installed KWin version and rebuild it after a KWin update.
+On KDE Plasma, also run the three commands of step 3 again, and run them again after every
+Plasma update.
 
 ### Uninstalling
 
@@ -151,6 +186,7 @@ Cursor for osu! is released under the [MIT License](LICENSE). The trail behaviou
 
 ```sh
 python3 -m pytest
+ctest --test-dir build --output-on-failure   # KWin trail, after building it
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
@@ -163,36 +199,104 @@ KDE Plasma desteği: [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! hayran yapımı bir araçtır. ppy veya osu! tarafından yapılmamıştır ve onlarla bağlantılı değildir.
 
-### Gereksinimler
+### Başlamadan önce
 
-- Trail için GNOME Shell 51 (Wayland). İmlecin kendisi her GNOME'da çalışır, trail eklentisi sadece
-  test edildiği GNOME Shell sürümü için işaretlidir.
-- Plasma entegrasyonu için KDE Plasma 6.6 ve Wayland oturumu. Bkz. [Plasma kurulumu](#plasma-kurulumu).
-- Python 3.10 veya üstü, Pillow, PyGObject ve libadwaita 1.5 veya üstü.
+Kurulum komutlarını bir terminale yazarsın. Terminali uygulamalarından aç: GNOME'da adı
+**Terminal** veya **Konsol**, KDE Plasma'da **Konsole**. Bir komutu kopyala, **Ctrl+Shift+V** ile
+yapıştır ve **Enter**'a bas. `sudo` ile başlayan komutlar şifreni sorar. Şifreni yazarken ekranda
+hiçbir şey görünmez, bu normal, yaz ve **Enter**'a bas.
 
-Paketleri dağıtımına göre kur:
+Hangi masaüstünü kullandığından emin değil misin? Terminalde `echo $XDG_CURRENT_DESKTOP` çalıştır.
+`GNOME` veya `KDE` yazar.
 
-| Dağıtım | Komut |
-| --- | --- |
-| Arch, CachyOS, Manjaro | `sudo pacman -S --needed python python-pillow python-gobject libadwaita` |
-| Ubuntu, Debian | `sudo apt install python3 python3-pil python3-gi gir1.2-adw-1` |
-| Fedora | `sudo dnf install python3 python3-pillow python3-gobject libadwaita` |
-| openSUSE | `sudo zypper install python3 python3-Pillow python3-gobject typelib-1_0-Adw-1` |
+### GNOME'da kurulum
 
-`install.sh` bunları kontrol eder, eksik bir şey varsa senin dağıtımının komutunu gösterir.
+GNOME'un Wayland oturumu gerekir. Trail GNOME Shell 51 için yapıldı, imleç her GNOME'da çalışır.
 
-### Kurulum
+1. Uygulamanın ihtiyaç duyduğu paketleri kur. Dağıtımına uygun satırı seç:
 
-```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
-bash install.sh
-```
+   ```sh
+   # Arch, CachyOS, Manjaro
+   sudo pacman -S --needed git python python-pillow python-gobject libadwaita
+   ```
 
-GNOME'da ilk kurulumdan sonra bir kez oturumu kapatıp aç, GNOME yeni eklentileri sadece girişte tanıyor.
-Sonra uygulamalardan **Cursor for osu!**'yu aç.
+   ```sh
+   # Ubuntu, Debian
+   sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
+   ```
 
-Güncellemek için yeni sürümü indirip tekrar kur:
+   ```sh
+   # Fedora
+   sudo dnf install git python3 python3-pillow python3-gobject libadwaita
+   ```
+
+   ```sh
+   # openSUSE
+   sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
+   ```
+
+2. Uygulamayı indir ve kur:
+
+   ```sh
+   git clone https://github.com/egehankara/cursor-for-osu.git
+   cd cursor-for-osu
+   bash install.sh
+   ```
+
+3. Bir kez oturumu kapatıp tekrar aç, GNOME trail'i böyle yükler.
+4. Uygulamalarından **Cursor for osu!**'yu aç ve bir skin seç.
+
+### KDE Plasma'da kurulum
+
+KDE Plasma 6.6 veya daha yenisi ve Wayland oturumu gerekir. Plasma'da trail, Plasma'nın pencere
+yöneticisi KWin için küçük bir eklentidir ve 3. adımdaki komutlar onu senin bilgisayarında derler.
+
+1. Uygulamanın ve trail'in ihtiyaç duyduğu paketleri kur. Dağıtımına uygun satırı seç:
+
+   ```sh
+   # Arch, CachyOS, Manjaro
+   sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
+   ```
+
+   ```sh
+   # Kubuntu
+   sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1 plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
+   ```
+
+2. Uygulamayı indir ve kur:
+
+   ```sh
+   git clone https://github.com/egehankara/cursor-for-osu.git
+   cd cursor-for-osu
+   bash install.sh
+   ```
+
+3. Aynı terminalde trail'i derle ve kur:
+
+   ```sh
+   # Arch, CachyOS, Manjaro
+   cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
+   cmake --build build
+   sudo cmake --install build
+   ```
+
+   ```sh
+   # Kubuntu
+   cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
+   cmake --build build
+   sudo cmake --install build
+   ```
+
+4. Bir kez oturumu kapatıp tekrar aç.
+5. **Sistem Ayarları**'nı aç, **Masaüstü Efektleri**'ne gir ve **osu! İmleç İzi**'ni aç.
+6. Uygulamalarından **Cursor for osu!**'yu aç ve bir skin seç.
+
+Trail kapalıyken de imleç çalışır. Trail CachyOS'ta Plasma 6 ile test edildi ve KWin 6.6'dan
+6.8'e kadar derlenir.
+
+### Güncelleme
+
+Bir terminal aç ve şunu çalıştır:
 
 ```sh
 cd cursor-for-osu
@@ -200,41 +304,7 @@ git pull
 bash install.sh
 ```
 
-### Plasma kurulumu
-
-Yukarıdaki Python ve GTK bağımlılıklarıyla `bash install.sh` komutunu Plasma Wayland oturumunda çalıştır.
-Tema değişiklikleri için `plasma-apply-cursortheme`, `kreadconfig6`, `kwriteconfig6`, `gdbus` ve `kscreen-doctor` kullanılır.
-Ek paketleri kurmak ve KWin efektini derlemek için şu komutları çalıştır.
-
-Kubuntu 26.04'te:
-
-```sh
-sudo apt install plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
-build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
-cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build "$build_dir"
-ctest --test-dir "$build_dir" --output-on-failure
-sudo cmake --install "$build_dir"
-```
-
-Arch, CachyOS ve Manjaro'da (`qtpaths6` PATH'te olmadığı için):
-
-```sh
-sudo pacman -S --needed plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
-build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
-cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build "$build_dir"
-ctest --test-dir "$build_dir" --output-on-failure
-sudo cmake --install "$build_dir"
-```
-
-Plasma Sistem Ayarları'nda Masaüstü Efektleri bölümünden **osu! İmleç İzi** efektini etkinleştir.
-Kurulumdan sonra efekt listede görünmezse oturumu kapatıp yeniden aç. Efekt etkinleştirildikten sonra
-izi uygulamanın trail anahtarından açıp kapatabilirsin. Efekt kapalıyken imleç teması kullanılabilir.
-
-Efekt KWin 6.6 ve sonrasıyla, 6.8 dahil, derlenir. CachyOS'ta Plasma 6 Wayland oturumunda ve
-KWin 6.6.7'de iç içe bir Wayland oturumunda test edildi. Efekti makinedeki KWin sürümüne karşı
-derle ve KWin güncellendiğinde yeniden derle.
+KDE Plasma'da 3. adımdaki üç komutu da tekrar çalıştır, her Plasma güncellemesinden sonra da yeniden çalıştır.
 
 ### Kaldırma
 
@@ -300,6 +370,7 @@ Cursor for osu! [MIT Lisansı](LICENSE) ile yayınlanır. Trail davranışı MIT
 
 ```sh
 python3 -m pytest
+ctest --test-dir build --output-on-failure   # KWin trail'i, derledikten sonra
 ```
 
 Uygulama üzerinde nasıl çalışılacağı [CONTRIBUTING.md](CONTRIBUTING.md#türkçe) dosyasında.
