@@ -66,10 +66,6 @@ cp -r "$source_dir/osu_cursor" "$app_dir/"
 rm -rf "$app_dir/osu_cursor/__pycache__"
 cp "$source_dir/uninstall.sh" "$data_home/osu-cursor/uninstall.sh"
 
-rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
-mkdir -p "$extension_dir"
-cp "$source_dir/extension/$uuid/"* "$extension_dir/"
-
 rm -f "$bin_dir/osu-cursor" "$data_home/applications/osu-cursor.desktop"  # the old name
 cat > "$bin_dir/cursor-for-osu" <<EOF
 #!/bin/sh
@@ -88,6 +84,15 @@ for icon in "$source_dir"/data/icons/hicolor/*/apps/*.svg; do
     mkdir -p "$(dirname "$target")"
     cp "$icon" "$target"
 done
+
+if PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.plasma import selected; raise SystemExit(not selected())'; then
+    say "Installed. Build and enable the trail effect separately in KDE Plasma."
+    exit 0
+fi
+
+rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
+mkdir -p "$extension_dir"
+cp "$source_dir/extension/$uuid/"* "$extension_dir/"
 
 # GNOME only discovers new extensions at login, so turn it on for the next one.
 PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.gnome import enable_extension; enable_extension()' 2>/dev/null ||

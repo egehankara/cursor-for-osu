@@ -8,7 +8,9 @@
 
 ## English
 
-Use the cursor and cursor trail of your osu! skins everywhere on GNOME, outside the game.
+Use the cursor and cursor trail of your osu! skins on GNOME or KDE Plasma, outside the game.
+
+KDE Plasma support by [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.
 
@@ -16,6 +18,7 @@ Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or 
 
 - GNOME Shell 51 (Wayland) for the trail. The cursor itself works on any GNOME, the trail extension
   is only marked for the GNOME Shell version it was tested on.
+- KDE Plasma 6.6 on Wayland for the Plasma integration. See [Plasma installation](#plasma-installation).
 - Python 3.10 or newer, Pillow, PyGObject and libadwaita 1.5 or newer.
 
 Install the packages for your distribution:
@@ -37,7 +40,7 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-Log out and back in once after the first install, because GNOME only finds new extensions at login.
+On GNOME, log out and back in once after the first install, because GNOME only finds new extensions at login.
 Then open **Cursor for osu!** from your applications.
 
 To update, get the new version and install again:
@@ -48,6 +51,29 @@ git pull
 bash install.sh
 ```
 
+### Plasma installation
+
+Run `bash install.sh` from a Plasma Wayland session with the Python and GTK dependencies above.
+Theme changes use `plasma-apply-cursortheme`, `kreadconfig6`, `kwriteconfig6`, `gdbus` and `kscreen-doctor`.
+Use these commands to install the extra packages and build the KWin effect on Kubuntu 26.04.
+
+```sh
+sudo apt install plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
+build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
+cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
+cmake --build "$build_dir"
+ctest --test-dir "$build_dir" --output-on-failure
+sudo cmake --install "$build_dir"
+```
+
+Enable **Cursor for osu! Trail** in Plasma System Settings under Desktop Effects. If the effect does
+not appear after installation, log out and back in. The app's trail switch controls drawing after
+the effect is enabled. The theme also works while the effect is disabled.
+
+The effect targets the KWin 6.6 series. Trail drawing was tested on KWin 6.6.7 in a nested
+Wayland session using QPainter. Build it against the installed KWin version and rebuild it
+after a KWin update.
+
 ### Uninstalling
 
 ```sh
@@ -57,6 +83,13 @@ cursor-for-osu uninstall --keep-data   # keep the skin list and settings for a l
 
 This puts your previous cursor back, turns the trail extension off and removes the app,
 the extension and the cursor themes it made. The skin files you added from are never touched.
+
+On Plasma, run the uninstall command from the Plasma Wayland session. To remove the separately
+installed module, disable **Cursor for osu! Trail** in Desktop Effects and remove the module.
+
+```sh
+sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
+```
 
 ### Languages
 
@@ -88,7 +121,7 @@ cursor-for-osu uninstall
   Its size matches the game. It is set with the slider in the app, or read from osu!lazer if you haven't set it. The game's Screen Scaling setting is taken into account too.
 - Every cursor shape shows the skin cursor. With **Keep system cursors** on, the text, resize, move, not-allowed and crosshair cursors come from the cursor theme you used before, coloured like the skin cursor: their dark parts take a dark shade of its colour and their light parts a light shade, so they stay visible on any background. The trail is not drawn behind them.
 - Each added skin is kept in its own folder under `~/.local/share/osu-cursor/skins`. Only the cursor files (`cursor`, `cursormiddle`, `cursortrail`, with their `@2x` versions) and `skin.ini` are copied.
-- The trail is drawn by the GNOME Shell extension in `extension/`. Fade times, part spacing and blending come from osu!lazer's `CursorTrail` and `LegacyCursorTrail`.
+- The GNOME Shell extension in `extension/` and the KWin effect in `kwin/` draw the trail. Fade times, part spacing and blending come from osu!lazer's `CursorTrail` and `LegacyCursorTrail`.
 - The trail turns off over fullscreen windows and while an application hides the cursor.
 
 Growing the cursor on click (`CursorExpand`) is not supported, because a cursor theme can't react to clicks.
@@ -109,7 +142,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
 
 ## Türkçe
 
-osu! skin'lerindeki imleci ve cursor trail'i oyunun dışında, GNOME'un her yerinde kullanır.
+osu! skin'lerindeki imleci ve cursor trail'i oyun dışında GNOME ve KDE Plasma'da kullanır.
+
+KDE Plasma desteği: [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! hayran yapımı bir araçtır. ppy veya osu! tarafından yapılmamıştır ve onlarla bağlantılı değildir.
 
@@ -117,6 +152,7 @@ Cursor for osu! hayran yapımı bir araçtır. ppy veya osu! tarafından yapılm
 
 - Trail için GNOME Shell 51 (Wayland). İmlecin kendisi her GNOME'da çalışır, trail eklentisi sadece
   test edildiği GNOME Shell sürümü için işaretlidir.
+- Plasma entegrasyonu için KDE Plasma 6.6 ve Wayland oturumu. Bkz. [Plasma kurulumu](#plasma-kurulumu).
 - Python 3.10 veya üstü, Pillow, PyGObject ve libadwaita 1.5 veya üstü.
 
 Paketleri dağıtımına göre kur:
@@ -138,7 +174,7 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-İlk kurulumdan sonra bir kez oturumu kapatıp aç, GNOME yeni eklentileri sadece girişte tanıyor.
+GNOME'da ilk kurulumdan sonra bir kez oturumu kapatıp aç, GNOME yeni eklentileri sadece girişte tanıyor.
 Sonra uygulamalardan **Cursor for osu!**'yu aç.
 
 Güncellemek için yeni sürümü indirip tekrar kur:
@@ -149,6 +185,29 @@ git pull
 bash install.sh
 ```
 
+### Plasma kurulumu
+
+Yukarıdaki Python ve GTK bağımlılıklarıyla `bash install.sh` komutunu Plasma Wayland oturumunda çalıştır.
+Tema değişiklikleri için `plasma-apply-cursortheme`, `kreadconfig6`, `kwriteconfig6`, `gdbus` ve `kscreen-doctor` kullanılır.
+Kubuntu 26.04'te ek paketleri kurmak ve KWin efektini derlemek için şu komutları çalıştır.
+
+```sh
+sudo apt install plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
+build_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cursor-for-osu/kwin"
+cmake -S kwin -B "$build_dir" -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
+cmake --build "$build_dir"
+ctest --test-dir "$build_dir" --output-on-failure
+sudo cmake --install "$build_dir"
+```
+
+Plasma Sistem Ayarları'nda Masaüstü Efektleri bölümünden **osu! İmleç İzi** efektini etkinleştir.
+Kurulumdan sonra efekt listede görünmezse oturumu kapatıp yeniden aç. Efekt etkinleştirildikten sonra
+izi uygulamanın trail anahtarından açıp kapatabilirsin. Efekt kapalıyken imleç teması kullanılabilir.
+
+Efekt KWin 6.6 serisini hedefler. İmleç izi KWin 6.6.7'de, QPainter kullanan iç içe bir Wayland
+oturumunda test edildi. Efekti makinedeki KWin sürümüne karşı derle ve KWin güncellendiğinde
+yeniden derle.
+
 ### Kaldırma
 
 ```sh
@@ -158,6 +217,13 @@ cursor-for-osu uninstall --keep-data   # skin listesini ve ayarları sonraki kur
 
 Önceki imlecini geri getirir, trail eklentisini kapatır, uygulamayı, eklentiyi ve oluşturduğu
 imleç temalarını siler. Skin eklerken seçtiğin dosyalara hiçbir zaman dokunulmaz.
+
+Plasma'da kaldırma komutunu Plasma Wayland oturumunda çalıştır. Ayrı kurulan KWin modülünü
+kaldırmak için Masaüstü Efektleri'nden **osu! İmleç İzi** efektini kapat ve modülü sil.
+
+```sh
+sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
+```
 
 ### Diller
 
@@ -189,7 +255,7 @@ cursor-for-osu uninstall
   Boyutu oyundakiyle aynıdır. Uygulamadaki kaydırıcıdan ayarlanır, ayarlanmadıysa osu!lazer'den okunur. Oyundaki ekran ölçekleme (Screen Scaling) ayarı da hesaba katılır.
 - Bütün imleç şekilleri skin imlecini gösterir. **Sistem imleçlerini koru** açıksa yazı, boyutlandırma, taşıma, yasak ve artı imleçleri önceden kullandığın imleç temasından alınır ve skin imlecinin rengine boyanır: koyu kısımları o rengin koyu tonunu, açık kısımları açık tonunu alır, böylece her arka planda görünürler. Bunların arkasında trail çizilmez.
 - Eklenen her skin `~/.local/share/osu-cursor/skins` altında kendi klasöründe tutulur. Sadece imleç dosyaları (`cursor`, `cursormiddle`, `cursortrail`, `@2x` sürümleriyle) ve `skin.ini` kopyalanır.
-- Trail'i `extension/` altındaki GNOME Shell eklentisi çizer. Solma süreleri, parça aralığı ve karışım modu osu!lazer'in `CursorTrail` ve `LegacyCursorTrail` kodundan alınmıştır.
+- Trail'i `extension/` altındaki GNOME Shell eklentisi ve `kwin/` altındaki KWin efekti çizer. Solma süreleri, parça aralığı ve karışım modu osu!lazer'in `CursorTrail` ve `LegacyCursorTrail` kodundan alınmıştır.
 - Tam ekran pencerelerde ve bir uygulama imleci gizlediğinde trail kapanır.
 
 Tıklayınca imlecin büyümesi (`CursorExpand`) desteklenmiyor, çünkü imleç teması tıklamaya tepki veremez.

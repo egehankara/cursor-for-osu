@@ -53,8 +53,17 @@ removed_message="$(say "Cursor for osu! was removed.")"
 kept_message="$(say "The skin list and settings were kept in {folder}." folder="$data_dir")"
 
 # Put the previous cursor back while the app is still here.
-if [ -d "$app_dir/osu_cursor" ]; then
+if PYTHONPATH="$code_dir" python3 -c 'from osu_cursor.plasma import selected; raise SystemExit(not selected())' 2>/dev/null; then
+    PYTHONPATH="$code_dir" python3 -m osu_cursor reset
+elif [ -e "$data_dir/plasma/previous.json" ]; then
+    say "Run reset from a Plasma Wayland session before uninstalling." >&2
+    exit 1
+elif [ -d "$app_dir/osu_cursor" ]; then
     PYTHONPATH="$app_dir" python3 -m osu_cursor reset >/dev/null 2>&1 || true
+fi
+
+if [ -e "$data_dir/previous.json" ] && [ -d "$code_dir/osu_cursor" ]; then
+    XDG_CURRENT_DESKTOP=GNOME PYTHONPATH="$code_dir" python3 -m osu_cursor reset >/dev/null 2>&1 || true
 fi
 current_theme="$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null || true)"
 if [[ "$current_theme" == "'osu-cursor-"* ]]; then
@@ -84,13 +93,14 @@ update-desktop-database "$data_home/applications" 2>/dev/null || true
 
 # Only the themes this app made, they carry a marker file.
 for theme in "$data_home/icons"/osu-cursor-*; do
-    if [ -e "$theme/.osu-cursor" ]; then
+    if [[ "${theme##*/}" =~ ^osu-cursor-(plasma-)?[0-9a-f]{12}$ ]] &&
+        [ ! -L "$theme" ] && [ -e "$theme/.osu-cursor" ]; then
         rm -rf "$theme"
     fi
 done
 
 if $keep_data; then
-    rm -rf "$app_dir" "$data_dir/source" "$data_dir/uninstall.sh"
+    rm -rf "$app_dir" "$data_dir/source" "$data_dir/plasma" "$data_dir/uninstall.sh"
     rm -f "$data_dir/state.json" "$data_dir/previous.json" "$data_dir"/trail-*.rgba
     echo "$removed_message"
     echo "$kept_message"

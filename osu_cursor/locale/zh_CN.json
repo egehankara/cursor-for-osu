@@ -98,5 +98,14 @@
   "{name} is not a valid .osk file.": "{name} 不是有效的 .osk 文件。",
   "{name} is removed from the list and the previous cursor comes back.": "{name} 将从列表中移除，并恢复之前的光标。",
   "{name} is removed from the list. The cursor you use now stays.": "{name} 将从列表中移除。当前使用的光标保持不变。",
-  "{path} was not found.": "找不到 {path}。"
+  "{path} was not found.": "找不到 {path}。",
+  "Plasma support requires a Wayland session.": "Plasma 支持需要 Wayland 会话。",
+  "Could not read Plasma cursor settings.": "无法读取 Plasma 光标设置。",
+  "Could not apply the Plasma cursor theme. Check your Plasma installation.": "无法应用 Plasma 光标主题。请检查 Plasma 安装。",
+  "Log out and back in to finish applying the Plasma cursor theme.": "请注销并重新登录以完成 Plasma 光标主题的应用。",
+  "The Plasma trail data could not be loaded.": "无法加载 Plasma 光标轨迹数据。",
+  "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "请在 Plasma 桌面特效中启用 Cursor for osu! Trail。",
+  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin 光标轨迹特效不可用。请为已安装的 KWin 版本编译此特效。",
+  "Installed. Build and enable the trail effect separately in KDE Plasma.": "安装完成。请在 KDE Plasma 中单独编译并启用光标轨迹特效。",
+  "Run reset from a Plasma Wayland session before uninstalling.": "卸载前请在 Plasma Wayland 会话中运行 reset。"
 }

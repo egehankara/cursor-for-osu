@@ -98,5 +98,14 @@
   "{name} is not a valid .osk file.": "{name} geçerli bir .osk dosyası değil.",
   "{name} is removed from the list and the previous cursor comes back.": "{name} listeden silinir ve önceki imlece dönülür.",
   "{name} is removed from the list. The cursor you use now stays.": "{name} listeden silinir. Şu an kullandığın imleç değişmez.",
-  "{path} was not found.": "{path} bulunamadı."
+  "{path} was not found.": "{path} bulunamadı.",
+  "Plasma support requires a Wayland session.": "Plasma desteği bir Wayland oturumu gerektirir.",
+  "Could not read Plasma cursor settings.": "Plasma imleç ayarları okunamadı.",
+  "Could not apply the Plasma cursor theme. Check your Plasma installation.": "Plasma imleç teması uygulanamadı. Plasma kurulumunu kontrol et.",
+  "Log out and back in to finish applying the Plasma cursor theme.": "Plasma imleç temasını uygulamayı tamamlamak için oturumu kapatıp tekrar aç.",
+  "The Plasma trail data could not be loaded.": "Plasma imleç izi verileri yüklenemedi.",
+  "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Plasma Masaüstü Efektleri bölümünde Cursor for osu! Trail'i etkinleştir.",
+  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin imleç izi efekti kullanılamıyor. Efekti kurulu KWin sürümün için derle.",
+  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Kuruldu. KDE Plasma'da imleç izi efektini ayrıca derleyip etkinleştir.",
+  "Run reset from a Plasma Wayland session before uninstalling.": "Kaldırmadan önce bir Plasma Wayland oturumunda reset komutunu çalıştır."
 }

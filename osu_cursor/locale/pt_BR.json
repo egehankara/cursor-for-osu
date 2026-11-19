@@ -98,5 +98,14 @@
   "{name} is not a valid .osk file.": "{name} não é um arquivo .osk válido.",
   "{name} is removed from the list and the previous cursor comes back.": "{name} sai da lista e o cursor anterior volta.",
   "{name} is removed from the list. The cursor you use now stays.": "{name} sai da lista. O cursor que você usa agora continua.",
-  "{path} was not found.": "{path} não foi encontrado."
+  "{path} was not found.": "{path} não foi encontrado.",
+  "Plasma support requires a Wayland session.": "O suporte ao Plasma requer uma sessão Wayland.",
+  "Could not read Plasma cursor settings.": "Não foi possível ler as configurações do cursor do Plasma.",
+  "Could not apply the Plasma cursor theme. Check your Plasma installation.": "Não foi possível aplicar o tema do cursor do Plasma. Verifique a instalação do Plasma.",
+  "Log out and back in to finish applying the Plasma cursor theme.": "Saia da sessão e entre novamente para concluir a aplicação do tema do cursor do Plasma.",
+  "The Plasma trail data could not be loaded.": "Não foi possível carregar os dados do rastro do Plasma.",
+  "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Ative Cursor for osu! Trail nos Efeitos da Área de Trabalho do Plasma.",
+  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "O efeito de rastro do KWin está indisponível. Compile-o para a versão instalada do KWin.",
+  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Instalado. Compile e ative o efeito de rastro separadamente no KDE Plasma.",
+  "Run reset from a Plasma Wayland session before uninstalling.": "Execute reset em uma sessão Wayland do Plasma antes de desinstalar."
 }

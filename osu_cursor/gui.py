@@ -479,7 +479,7 @@ class Window(Adw.ApplicationWindow):
         skin = gnome.current_skin()
         self._title.set_subtitle(" ".join(skin.split()) if skin else _("No skin applied yet"))
 
-        problem = gnome.trail_problem()
+        problem = gnome.desktop_notice() or gnome.trail_problem()
         self._banner.set_title(problem or "")
         self._banner.set_revealed(problem is not None)
 

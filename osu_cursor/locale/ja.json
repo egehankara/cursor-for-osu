@@ -98,5 +98,14 @@
   "{name} is not a valid .osk file.": "{name} は有効な .osk ファイルではありません。",
   "{name} is removed from the list and the previous cursor comes back.": "{name} をリストから削除し、元のカーソルに戻します。",
   "{name} is removed from the list. The cursor you use now stays.": "{name} をリストから削除します。今使っているカーソルは変わりません。",
-  "{path} was not found.": "{path} が見つかりません。"
+  "{path} was not found.": "{path} が見つかりません。",
+  "Plasma support requires a Wayland session.": "Plasma で使用するには Wayland セッションが必要です。",
+  "Could not read Plasma cursor settings.": "Plasma のカーソル設定を読み込めませんでした。",
+  "Could not apply the Plasma cursor theme. Check your Plasma installation.": "Plasma のカーソルテーマを適用できませんでした。Plasma のインストールを確認してください。",
+  "Log out and back in to finish applying the Plasma cursor theme.": "ログアウトして再ログインし、Plasma のカーソルテーマの適用を完了してください。",
+  "The Plasma trail data could not be loaded.": "Plasma のカーソル軌跡データを読み込めませんでした。",
+  "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Plasma のデスクトップ効果で Cursor for osu! Trail を有効にしてください。",
+  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin の軌跡効果を利用できません。インストール済みの KWin に合わせてビルドしてください。",
+  "Installed. Build and enable the trail effect separately in KDE Plasma.": "インストールしました。KDE Plasma の軌跡効果は別途ビルドして有効にしてください。",
+  "Run reset from a Plasma Wayland session before uninstalling.": "アンインストール前に、Plasma の Wayland セッションで reset を実行してください。"
 }
