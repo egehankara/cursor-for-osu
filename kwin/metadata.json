@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Name": "Cursor for osu! Trail",
+        "Name[tr]": "osu! İmleç İzi",
+        "Description": "Draws the cursor trail of the skin applied with Cursor for osu!",
+        "Description[tr]": "Cursor for osu! ile uygulanan skin'in imleç izini çizer.",
+        "Category": "Appearance",
+        "EnabledByDefault": false,
+        "License": "MIT"
+    }
+}

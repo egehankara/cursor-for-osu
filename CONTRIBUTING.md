@@ -7,8 +7,8 @@
 ### Setting up
 
 ```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
+git clone https://github.com/MehmetAkifUgur/osu-cursor-kde.git
+cd osu-cursor-kde
 bash install.sh            # installs the app and the trail extension for your user
 python3 -m osu_cursor      # runs the app straight from the source folder
 python3 -m pytest          # runs the tests
@@ -53,7 +53,7 @@ different `{placeholders}`. If you can't translate a language, ask in the pull r
 ### Before you push
 
 1. `python3 -m pytest` passes.
-2. `git pull --rebase` so your commits go on top of the latest `master`.
+2. `git pull --rebase` so your commits go on top of the latest `main`.
 3. One change per commit. The first line says what the commit does in English, in the
    imperative ("Add a trail opacity slider"), and the lines below say why.
 
@@ -64,8 +64,8 @@ Never commit skin images or `.osk` files, they belong to their creators.
 ### Kurulum
 
 ```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
+git clone https://github.com/MehmetAkifUgur/osu-cursor-kde.git
+cd osu-cursor-kde
 bash install.sh            # uygulamayı ve trail eklentisini kendi kullanıcın için kurar
 python3 -m osu_cursor      # uygulamayı doğrudan kaynak klasörden çalıştırır
 python3 -m pytest          # testleri çalıştırır
@@ -110,7 +110,7 @@ Bir dili çeviremiyorsan pull request'te veya issue'da sor.
 ### Push etmeden önce
 
 1. `python3 -m pytest` geçiyor olsun.
-2. `git pull --rebase` yap ki commit'lerin en güncel `master`'ın üstüne gelsin.
+2. `git pull --rebase` yap ki commit'lerin en güncel `main`'in üstüne gelsin.
 3. Her commit'te tek bir değişiklik olsun. İlk satır commit'in ne yaptığını İngilizce ve emir kipinde
    söylesin ("Add a trail opacity slider"), altındaki satırlar nedenini anlatsın.
 

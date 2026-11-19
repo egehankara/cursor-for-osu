@@ -74,6 +74,10 @@ def main() -> int:
                     state=_("on") if gnome.extension_active() else _("off")
                 )
             )
+            if problem := gnome.trail_problem():
+                print(problem)
+        if notice := gnome.desktop_notice():
+            print(notice)
     except SkinError as error:
         print(error, file=sys.stderr)
         return 1

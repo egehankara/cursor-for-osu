@@ -98,5 +98,14 @@
   "{name} is not a valid .osk file.": "{name} не является корректным файлом .osk.",
   "{name} is removed from the list and the previous cursor comes back.": "{name} удаляется из списка, и возвращается прежний курсор.",
   "{name} is removed from the list. The cursor you use now stays.": "{name} удаляется из списка. Текущий курсор не изменится.",
-  "{path} was not found.": "{path} не найден."
+  "{path} was not found.": "{path} не найден.",
+  "Plasma support requires a Wayland session.": "Для поддержки Plasma необходим сеанс Wayland.",
+  "Could not read Plasma cursor settings.": "Не удалось прочитать настройки курсора Plasma.",
+  "Could not apply the Plasma cursor theme. Check your Plasma installation.": "Не удалось применить тему курсора Plasma. Проверьте установку Plasma.",
+  "Log out and back in to finish applying the Plasma cursor theme.": "Выйдите из сеанса и войдите снова, чтобы завершить применение темы курсора Plasma.",
+  "The Plasma trail data could not be loaded.": "Не удалось загрузить данные следа курсора в Plasma.",
+  "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Включите Cursor for osu! Trail в эффектах рабочего стола Plasma.",
+  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "Эффект следа KWin недоступен. Соберите его для установленной версии KWin.",
+  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Установлено. Соберите и включите эффект следа в KDE Plasma отдельно.",
+  "Run reset from a Plasma Wayland session before uninstalling.": "Перед удалением выполните reset в сеансе Plasma Wayland."
 }

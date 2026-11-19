@@ -98,5 +98,14 @@
   "{name} is not a valid .osk file.": "{name} n'est pas un fichier .osk valide.",
   "{name} is removed from the list and the previous cursor comes back.": "{name} est retiré de la liste et le curseur précédent revient.",
   "{name} is removed from the list. The cursor you use now stays.": "{name} est retiré de la liste. Le curseur que vous utilisez ne change pas.",
-  "{path} was not found.": "{path} est introuvable."
+  "{path} was not found.": "{path} est introuvable.",
+  "Plasma support requires a Wayland session.": "La prise en charge de Plasma nécessite une session Wayland.",
+  "Could not read Plasma cursor settings.": "Impossible de lire les paramètres du pointeur de Plasma.",
+  "Could not apply the Plasma cursor theme. Check your Plasma installation.": "Impossible d’appliquer le thème du pointeur de Plasma. Vérifiez votre installation de Plasma.",
+  "Log out and back in to finish applying the Plasma cursor theme.": "Déconnectez-vous puis reconnectez-vous pour terminer l’application du thème du pointeur de Plasma.",
+  "The Plasma trail data could not be loaded.": "Impossible de charger les données de la traînée dans Plasma.",
+  "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Activez Cursor for osu! Trail dans les effets du bureau de Plasma.",
+  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "L’effet de traînée KWin est indisponible. Compilez-le pour votre version de KWin.",
+  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Installation terminée. Compilez et activez séparément l’effet de traînée dans KDE Plasma.",
+  "Run reset from a Plasma Wayland session before uninstalling.": "Exécutez reset depuis une session Plasma sous Wayland avant la désinstallation."
 }
