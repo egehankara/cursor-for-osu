@@ -64,7 +64,11 @@ public:
         return Effect::debug(parameter);
     }
 
+#ifdef KWIN_PREPAINT_WITHOUT_TIMESTAMP
+    void prePaintScreen(ScreenPrePaintData &data) override
+#else
     void prePaintScreen(ScreenPrePaintData &data, std::chrono::milliseconds presentTime) override
+#endif
     {
         const QRectF previous = m_bounds;
         if (m_config && isActive()) {
@@ -86,18 +90,52 @@ public:
         }
         data.paint |= damage(previous);
         data.paint |= damage(m_bounds);
+#ifdef KWIN_PREPAINT_WITHOUT_TIMESTAMP
+        effects->prePaintScreen(data);
+#else
         effects->prePaintScreen(data, presentTime);
+#endif
     }
 
+#ifdef KWIN_PAINT_RETURNS_BOOL
+    bool paintScreen(const RenderTarget &target, const RenderViewport &viewport, int mask,
+                     const Region &deviceRegion, LogicalOutput *screen) override
+    {
+        if (!effects->paintScreen(target, viewport, mask, deviceRegion, screen)) {
+            return false;
+        }
+        paintTrail(target, viewport, deviceRegion);
+        return true;
+    }
+#else
     void paintScreen(const RenderTarget &target, const RenderViewport &viewport, int mask,
                      const Region &deviceRegion, LogicalOutput *screen) override
     {
         effects->paintScreen(target, viewport, mask, deviceRegion, screen);
+        paintTrail(target, viewport, deviceRegion);
+    }
+#endif
+
+    void postPaintScreen() override
+    {
+        if (!m_bounds.isEmpty()) {
+            effects->addRepaint(damage(m_bounds));
+        }
+        effects->postPaintScreen();
+    }
+
+private:
+    void paintTrail(const RenderTarget &target, const RenderViewport &viewport, const Region &deviceRegion)
+    {
         if (m_parts.parts().empty() || !viewport.renderRect().intersects(RectF(m_bounds))) {
             return;
         }
         if (effects->compositingType() == QPainterCompositing) {
+#ifdef KWIN_PAINT_RETURNS_BOOL
+            paintSoftware(target, viewport, deviceRegion);
+#else
             paintSoftware(viewport, deviceRegion);
+#endif
             return;
         }
         if (!m_texture) {
@@ -141,15 +179,6 @@ public:
         glDisable(GL_BLEND);
     }
 
-    void postPaintScreen() override
-    {
-        if (!m_bounds.isEmpty()) {
-            effects->addRepaint(damage(m_bounds));
-        }
-        effects->postPaintScreen();
-    }
-
-private:
     qreal time() const { return m_clock.nsecsElapsed() / 1000000.0; }
 
     qreal opacity(const Part &part, qreal now) const
@@ -157,6 +186,26 @@ private:
         return std::clamp(1.0 - (now - part.born) / m_config->fade(), 0.0, 1.0);
     }
 
+#ifdef KWIN_PAINT_RETURNS_BOOL
+    void paintSoftware(const RenderTarget &target, const RenderViewport &viewport, const Region &deviceRegion)
+    {
+        QImage *image = target.image();
+        if (!image || image->isNull()) {
+            return;
+        }
+        QPainter painter(image);
+        const qreal inverseDpr = 1.0 / image->devicePixelRatio();
+        painter.scale(inverseDpr, inverseDpr);
+        QRegion clip;
+        const Region visible = deviceRegion.intersected(viewport.deviceRect()).intersected(target.transformedRect());
+        for (const Rect &rect : visible.rects()) {
+            clip += QRect(rect);
+        }
+        paintSoftwareParts(painter, clip, [&viewport](const QRectF &stamp) {
+            return QRectF(viewport.mapToDeviceCoordinates(RectF(stamp)));
+        });
+    }
+#else
     void paintSoftware(const RenderViewport &viewport, const Region &deviceRegion)
     {
         QRegion clip;
@@ -166,16 +215,22 @@ private:
         }
         QPainter *painter = effects->scenePainter();
         painter->save();
-        painter->setClipRegion(clip, Qt::IntersectClip);
-        painter->setRenderHint(QPainter::SmoothPixmapTransform);
-        painter->setCompositionMode(m_config->disjoint ? QPainter::CompositionMode_SourceOver
-                                                        : QPainter::CompositionMode_Plus);
+        paintSoftwareParts(*painter, clip, [](const QRectF &stamp) { return stamp; });
+        painter->restore();
+    }
+#endif
+
+    void paintSoftwareParts(QPainter &painter, const QRegion &clip, auto mapStamp)
+    {
+        painter.setClipRegion(clip, Qt::IntersectClip);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        painter.setCompositionMode(m_config->disjoint ? QPainter::CompositionMode_SourceOver
+                                                      : QPainter::CompositionMode_Plus);
         const qreal now = time();
         for (const Part &part : m_parts.parts()) {
-            painter->setOpacity(opacity(part, now));
-            painter->drawImage(m_config->stamp(part.pos), m_config->texture);
+            painter.setOpacity(opacity(part, now));
+            painter.drawImage(mapStamp(m_config->stamp(part.pos)), m_config->texture);
         }
-        painter->restore();
     }
 
     static Rect damage(const QRectF &bounds)
