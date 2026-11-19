@@ -1,3 +1,3 @@
-"""Use osu! skin cursors and cursor trails everywhere on GNOME."""
+"""Use osu! skin cursors and cursor trails on GNOME and KDE Plasma."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
