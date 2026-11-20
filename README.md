@@ -161,9 +161,9 @@ to the translated one. `python3 -m pytest` checks that every text has a translat
 
 ### Usage
 
-Open **Cursor for osu!** from your applications and add a skin to the list with **Choose .osk** or **Choose folder** (for an unpacked skin folder), or drop `.osk` files and skin folders on the window. Click a skin in the list to apply it.
+Open **Cursor for osu!** from your applications and add skins with the **.osk** and **Folder** buttons (for an unpacked skin folder), or drop `.osk` files and skin folders on the window. Each skin gets a card with its cursor and trail, its name and its author. Click a card to apply the skin, the one in use has a pink frame. Set the size with the slider, or click the number next to it and type one.
 
-Skins you export from osu!lazer are added on their own, the app watches the game's exports folder while it is open and catches up on new exports when it starts. A skin you remove from the list doesn't come back unless you export it again. This can be turned off with the **Watch osu! exports** switch under **More settings**. The **Add all** button next to it adds every export at once, removed skins included. If osu!lazer keeps its files somewhere the app doesn't look, pick the folder with **Change** next to **osu!lazer folder**. Right-click a skin to rename it or open its folder. Removing the skin in use goes back to your previous cursor.
+Skins you export from osu!lazer are added on their own, the app watches the game's exports folder while it is open and catches up on new exports when it starts. A skin you remove from the list doesn't come back unless you export it again. This can be turned off with the **Watch osu! exports** switch under **More settings**, the gear button at the top. The **Add all** button next to it adds every export at once, removed skins included. If osu!lazer keeps its files somewhere the app doesn't look, pick the folder with **Change** next to **osu!lazer folder**. Right-click a card to rename the skin, open its folder or remove it. Removing the skin in use goes back to your previous cursor.
 
 From the command line:
 
@@ -355,9 +355,9 @@ Başka bir dilde açmak için: `LANGUAGE=de cursor-for-osu`.
 
 ### Kullanım
 
-Uygulamalardan **Cursor for osu!**'i aç, **.osk seç** veya **Klasör seç** ile ya da pencereye sürükleyerek `.osk` dosyalarını ve skin klasörlerini listeye ekle. Uygulamak için listeden bir skine tıkla.
+Uygulamalardan **Cursor for osu!**'i aç, **.osk** ve **Klasör** düğmeleriyle ya da pencereye sürükleyerek `.osk` dosyalarını ve skin klasörlerini ekle. Her skin, imleci ve trail'i, adı ve yapımcısıyla bir kart olarak görünür. Uygulamak için bir karta tıkla, kullandığın skin pembe çerçeveli olur. Boyutu kaydırıcıyla ayarlayabilir ya da yanındaki sayıya tıklayıp yazabilirsin.
 
-osu!lazer'dan export ettiğin skin'ler kendiliğinden eklenir: uygulama açıkken oyunun exports klasörünü izler, açılınca da kapalıyken yapılan export'ları ekler. Listeden kaldırdığın bir skin, tekrar export etmedikçe geri gelmez. Bunu **Diğer ayarlar** altındaki **osu! export'larını izle** anahtarıyla kapatabilirsin. Yanındaki **Tümünü ekle** düğmesi, kaldırdıkların dahil bütün export'ları bir kerede ekler. osu!lazer dosyalarını uygulamanın bakmadığı bir yerde tutuyorsa, **osu!lazer klasörü** satırındaki **Değiştir** ile klasörü seçebilirsin. Bir skine sağ tıklayarak ismini değiştirebilir veya klasörünü açabilirsin. Kullandığın skini kaldırınca önceki imlecine dönersin.
+osu!lazer'dan export ettiğin skin'ler kendiliğinden eklenir: uygulama açıkken oyunun exports klasörünü izler, açılınca da kapalıyken yapılan export'ları ekler. Listeden kaldırdığın bir skin, tekrar export etmedikçe geri gelmez. Bunu üstteki ⚙ düğmesiyle açılan **Diğer ayarlar** altındaki **osu! export'larını izle** anahtarıyla kapatabilirsin. Yanındaki **Tümünü ekle** düğmesi, kaldırdıkların dahil bütün export'ları bir kerede ekler. osu!lazer dosyalarını uygulamanın bakmadığı bir yerde tutuyorsa, **osu!lazer klasörü** satırındaki **Değiştir** ile klasörü seçebilirsin. Bir karta sağ tıklayarak skin'in adını değiştirebilir, klasörünü açabilir veya onu kaldırabilirsin. Kullandığın skini kaldırınca önceki imlecine dönersin.
 
 Komut satırından:
 
