@@ -12,7 +12,8 @@
 
 Extract the portable ZIP and run `CursorForOsu.exe`. Pick a `.osk` file or skin folder,
 or drop it on the window. Select its card to apply it. The **Trail** switch controls
-the desktop trail. Closing the window keeps the trail running in the background.
+the desktop trail. Use **Trail density** (50–400%) to space the trail stamps.
+Closing the window keeps the trail running in the background.
 Use the Cursor for osu! icon in the Windows notification area to reopen the window or
 quit the app. Quitting stops the trail and keeps the skin cursor for the Windows session.
 Use **Go back to the previous cursor** to reload your Windows pointer scheme.
@@ -228,7 +229,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
 
 Taşınabilir ZIP’i aç ve `CursorForOsu.exe` dosyasını çalıştır. `.osk` dosyasını veya
 skin klasörünü seç ya da pencereye sürükle. Uygulamak için skin kartına tıkla.
-**Trail** ayarı masaüstündeki izi açıp kapatır. Pencereyi kapattığında iz arka planda
+**Trail** ayarı masaüstündeki izi açıp kapatır. **İz yoğunluğu** ile iz parçalarının sıklığını
+%50 ile %400 arasında ayarlayabilirsin. Pencereyi kapattığında iz arka planda
 çalışmaya devam eder. Pencereyi geri açmak veya uygulamadan çıkmak için Windows bildirim
 alanındaki Cursor for osu! simgesini kullan. Uygulamadan çıkınca iz durur ve skin imleci
 Windows oturumunda kalır. Windows imleç şemana dönmek için **Önceki imlece dön** düğmesini kullan.

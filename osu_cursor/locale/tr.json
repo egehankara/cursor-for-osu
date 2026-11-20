@@ -138,5 +138,6 @@
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "Kuruldu. KDE Plasma'da imleç izi efektini ayrıca derleyip etkinleştir.",
   "Run reset from a Plasma Wayland session before uninstalling.": "Kaldırmadan önce bir Plasma Wayland oturumunda reset komutunu çalıştır.",
   "Open Cursor for osu!": "Cursor for osu! uygulamasını aç",
-  "Quit Cursor for osu!": "Cursor for osu! uygulamasından çık"
+  "Quit Cursor for osu!": "Cursor for osu! uygulamasından çık",
+  "Trail density": "İz yoğunluğu"
 }

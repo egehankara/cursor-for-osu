@@ -89,6 +89,22 @@ class Window(QWidget):
         flags.addStretch()
         page.addLayout(flags)
 
+        density_row = QHBoxLayout()
+        density_label = label(_("Trail density"))
+        self.density = QSlider(Qt.Orientation.Horizontal)
+        self.density.setRange(windows.TRAIL_DENSITY_MIN, windows.TRAIL_DENSITY_MAX)
+        self.density.setSingleStep(25)
+        self.density.setPageStep(50)
+        self.density.setTracking(False)
+        self.density.setAccessibleName(density_label.text())
+        self.density_text = label("")
+        self.density.valueChanged.connect(lambda value: self._operation(windows.set_trail_density, value))
+        self.density.sliderMoved.connect(lambda value: self.density_text.setText(f"{value}%"))
+        density_row.addWidget(density_label)
+        density_row.addWidget(self.density, 1)
+        density_row.addWidget(self.density_text)
+        page.addLayout(density_row)
+
         tools = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setPlaceholderText(_("Search skins"))
@@ -148,18 +164,22 @@ class Window(QWidget):
         if self.closing:
             return
         state = windows.active()
-        with QSignalBlocker(self.trail_box), QSignalBlocker(self.keep_box):
-            self.trail_box.setChecked(windows.trail_enabled())
+        trail_enabled = windows.trail_enabled()
+        density = windows.trail_density()
+        with QSignalBlocker(self.trail_box), QSignalBlocker(self.keep_box), QSignalBlocker(self.density):
+            self.trail_box.setChecked(trail_enabled)
             self.keep_box.setChecked(windows.keep_system_cursors())
+            self.density.setValue(density)
+        self.density_text.setText(f"{density}%")
         key, name = state.get("key"), state.get("name")
         if (key, name) != (self.active_key, self.active_name):
             self.active_key, self.active_name = key, name
             self._cards()
-        signature = (key, state.get("fingerprint"), state.get("scale"), windows.trail_enabled())
+        signature = (key, state.get("fingerprint"), state.get("scale"), trail_enabled, density)
         if signature != self.trail_signature:
             self.trail_signature = signature
             try:
-                self.trail.configure(windows.trail_skin(state), state, windows.cursor_size())
+                self.trail.configure(windows.trail_skin(state), state, windows.cursor_size(), density / 100)
             except (SkinError, OSError, RuntimeError, zipfile.BadZipFile) as error:
                 self.trail.stop()
                 self._error(error)

@@ -12,6 +12,8 @@ from .i18n import _
 from .library import Result, data_dir
 from .skin import SkinError, read_cursor_files, skin_from_files, skin_stem
 
+TRAIL_DENSITY_MIN, TRAIL_DENSITY_MAX = 50, 400
+
 
 def _read(name: str) -> dict:
     try:
@@ -64,6 +66,11 @@ def keep_system_cursors() -> bool:
 
 def trail_enabled() -> bool:
     return _read("settings.json").get("trail_enabled", True) is not False
+
+
+def trail_density() -> int:
+    density = _read("settings.json").get("trail_density", 100)
+    return density if type(density) is int and TRAIL_DENSITY_MIN <= density <= TRAIL_DENSITY_MAX else 100
 
 
 def _forget() -> None:
@@ -130,6 +137,11 @@ def set_keep_system_cursors(keep: bool) -> None:
 def set_trail_enabled(enabled: bool) -> None:
     with _lock():
         _write("settings.json", {**_read("settings.json"), "trail_enabled": enabled})
+
+
+def set_trail_density(density: int) -> None:
+    with _lock():
+        _write("settings.json", {**_read("settings.json"), "trail_density": density})
 
 
 def reset() -> None:

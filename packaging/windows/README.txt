@@ -4,6 +4,7 @@ Cursor for osu! for Windows
 Extract the entire folder and open CursorForOsu.exe on Windows 11 x64.
 Choose an .osk file or a skin folder, or drop it on the window. Click the
 skin card to apply it. The Trail switch controls the desktop cursor trail.
+Raise Trail density to place more stamps along the trail.
 
 Closing the window keeps the trail running in the background. Use the Cursor
 for osu! icon in the Windows notification area to reopen the window or quit.

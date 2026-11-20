@@ -83,20 +83,23 @@ def fullscreen(point, monitors) -> bool:
 
 
 class History:
-    def __init__(self, disjoint: bool, interval: float):
+    def __init__(self, disjoint: bool, interval: float, density: float = 1.0):
         self.parts = deque(maxlen=MAX_PARTS)
         self.anchor = None
-        self.interval = max(1.0, interval)
+        self.interval = max(1.0, interval) / density
+        self.density = density
+        self.stamp_credit = 0.0
         self.disjoint = disjoint
         self.fade = 0.15 if disjoint else 0.5
 
     def move(self, point, now):
         if self.anchor is None:
+            self.stamp_credit = 0.0
             self.anchor = (*point, now)
             if self.disjoint:
                 self.parts.append(self.anchor)
             return
-        x, y, then = self.anchor
+        x, y, _ = self.anchor
         dx, dy = point[0] - x, point[1] - y
         distance = math.hypot(dx, dy)
         if not distance:
@@ -106,11 +109,17 @@ class History:
             self.anchor = None
             self.move(point, now)
         elif self.disjoint:
-            if now - then >= 1 / 60:
-                self.anchor = (*point, now)
-                self.parts.append(self.anchor)
+            # Carry fractional stamps between frames so intermediate densities work too.
+            self.stamp_credit += self.density
+            count = int(self.stamp_credit)
+            self.stamp_credit -= count
+            self.anchor = (*point, now)
+            for step in range(1, count + 1):
+                ratio = step / count
+                self.parts.append((x + dx * ratio, y + dy * ratio, now))
         else:
-            for step in range(1, min(MAX_PARTS, int(distance / self.interval))):
+            steps = int(distance / self.interval)
+            for step in range(max(1, steps - MAX_PARTS), steps):
                 ratio = step * self.interval / distance
                 self.anchor = (x + dx * ratio, y + dy * ratio, now)
                 self.parts.append(self.anchor)
@@ -178,7 +187,7 @@ class Trail(QAbstractNativeEventFilter):
         self.timer.timeout.connect(self._tick)
         application.installNativeEventFilter(self)
 
-    def configure(self, skin, state, size):
+    def configure(self, skin, state, size, density):
         self.stop()
         if skin is None or skin.trail is None:
             return
@@ -197,7 +206,7 @@ class Trail(QAbstractNativeEventFilter):
         self.cached_cursor = None
         self.last_check = 0
         self.last_point = None
-        self.history = History(skin.disjoint_trail, width / render.TRAIL_INTERVAL_DIVISOR / max(1, size))
+        self.history = History(skin.disjoint_trail, width / render.TRAIL_INTERVAL_DIVISOR / max(1, size), density)
         device = RawDevice(1, 2, 0x100, self.window)  # RIDEV_INPUTSINK
         win32.checked(register_raw(c.byref(device), 1, c.sizeof(device)))
         self.registered = True

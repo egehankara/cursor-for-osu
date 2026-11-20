@@ -130,6 +130,27 @@ def test_trail_expires(disjoint, expiry):
     assert not history.parts
 
 
+@pytest.mark.parametrize("disjoint", [True, False])
+def test_trail_density_changes_stamp_count_without_drawing_at_rest(disjoint):
+    counts = []
+    for density in (0.5, 1.0, 1.5, 4.0):
+        history = History(disjoint, 8, density)
+        for frame in range(7):
+            history.move((frame * 32, 10), frame / 60)
+        counts.append(len(history.parts))
+        history.move((192, 10), 0.12)
+        assert len(history.parts) == counts[-1]
+    assert counts == sorted(set(counts))
+
+
+def test_dense_trail_retains_the_stamps_nearest_the_cursor():
+    history = History(False, 1, 4)
+    history.move((0, 0), 0)
+    history.move((500, 0), 1 / 60)
+    assert len(history.parts) == windows_trail.MAX_PARTS
+    assert history.parts[-1][0] == pytest.approx(499.75)
+
+
 def test_win32_cursor_bitmap_round_trip():
     image = Image.new("RGBA", (31, 29), (90, 180, 255, 155)).convert("RGBa")
     first = win32.create_cursor(Frame(image, 3, 7))
@@ -226,3 +247,26 @@ def test_window_close_keeps_trail_until_tray_quit(desktop, monkeypatch):
     finally:
         window._shutdown()
         window.close()
+
+
+def test_trail_density_slider_updates_and_persists(desktop, monkeypatch):
+    source, system = desktop
+    windows.apply_skin(source)
+    app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda: False)
+    window = windows_gui.Window(app)
+    try:
+        cursor = system["system"]
+        assert window.density.value() == 100 and window.trail.history.density == 1.0
+        window.density.setValue(250)
+        assert window.density_text.text() == "250%"
+        assert window.trail.history.density == 2.5 and windows.trail_density() == 250
+        assert system["system"] == cursor
+    finally:
+        window.close()
+
+    reopened = windows_gui.Window(app)
+    try:
+        assert reopened.density.value() == 250 and reopened.trail.history.density == 2.5
+    finally:
+        reopened.close()

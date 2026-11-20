@@ -138,5 +138,6 @@
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "インストールしました。KDE Plasma の軌跡効果は別途ビルドして有効にしてください。",
   "Run reset from a Plasma Wayland session before uninstalling.": "アンインストール前に、Plasma の Wayland セッションで reset を実行してください。",
   "Open Cursor for osu!": "Cursor for osu! を開く",
-  "Quit Cursor for osu!": "Cursor for osu! を終了"
+  "Quit Cursor for osu!": "Cursor for osu! を終了",
+  "Trail density": "軌跡の密度"
 }

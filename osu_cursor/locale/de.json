@@ -138,5 +138,6 @@
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "Installiert. Erstelle und aktiviere den Spureffekt separat in KDE Plasma.",
   "Run reset from a Plasma Wayland session before uninstalling.": "Führe reset vor der Deinstallation in einer Plasma-Wayland-Sitzung aus.",
   "Open Cursor for osu!": "Cursor for osu! öffnen",
-  "Quit Cursor for osu!": "Cursor for osu! beenden"
+  "Quit Cursor for osu!": "Cursor for osu! beenden",
+  "Trail density": "Spurdichte"
 }
