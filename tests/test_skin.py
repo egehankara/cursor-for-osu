@@ -881,3 +881,30 @@ def test_the_desktop_entry_icon_is_in_the_project():
     from osu_cursor.gui import APP_ID
 
     assert icon == APP_ID  # the window looks its icon up by the app ID
+
+
+def test_osu_folder_can_be_chosen(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    default = tmp_path / "data" / "osu"
+    chosen = tmp_path / "games" / "osu"
+    chosen.mkdir(parents=True)
+
+    with pytest.raises(SkinError):
+        gnome.set_osu_dir(chosen)  # nothing in it says it is osu!lazer's
+    assert gnome.chosen_osu_dir() is None
+
+    (chosen / "game.ini").write_text("GameplayCursorSize = 0.6\n")
+    gnome.set_osu_dir(chosen)
+    assert gnome.osu_dir() == chosen
+    assert gnome.exports_dir() == chosen / "exports"
+    assert gnome.game_cursor_size() == 0.6
+
+    moved = tmp_path / "elsewhere"
+    moved.mkdir()
+    (chosen / "storage.ini").write_text(f"FullPath = {moved}\n")
+    assert gnome.osu_dir() == moved  # the game's own pointer is still followed
+
+    gnome.set_osu_dir(None)
+    assert gnome.chosen_osu_dir() is None
+    assert gnome.osu_dir() == default

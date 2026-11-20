@@ -13,14 +13,18 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from . import gnome  # noqa: E402
+from . import __version__, gnome  # noqa: E402
 from .i18n import _  # noqa: E402
 from .skin import SkinError  # noqa: E402
 
 APP_ID = "io.github.egehankara.CursorForOsu"
-SIZE_SETTLE_MS = 300
+REPOSITORY = "https://github.com/egehankara/cursor-for-osu"
 TOAST_MS = 3000
+# While the size slider is dragged. Each step makes GNOME reload the cursor in every app.
+SIZE_INTERVAL_MS = 100
 SKIN_LIST_MIN_HEIGHT = 150
+PAGE_MARGIN = 12
+SKIN_LIST_DEFAULT_HEIGHT = 420
 BUSY_DIM_MS = 150  # quick jobs finish before anything on screen changes
 EXPORT_SETTLE_MS = 1000  # the game writes an export in several steps
 DROP_HINT = _("You can also drop .osk files and skin folders on the window.")
@@ -56,6 +60,17 @@ def _exports_message(added: int) -> str:
     return _("New skins from osu!lazer: {added}").format(added=added)
 
 
+def _hide_edit_icon(widget: Gtk.Widget) -> None:
+    """Hide an entry row's pencil, it says "edit this value", which reads oddly on a search field."""
+    child = widget.get_first_child()
+    while child is not None:
+        if child.has_css_class("edit-icon"):
+            child.set_visible(False)
+        else:
+            _hide_edit_icon(child)
+        child = child.get_next_sibling()
+
+
 def _searchable(text: str) -> str:
     """Lowercase text that also matches when Turkish i and ı are typed either way."""
     return text.casefold().replace("i̇", "i").replace("ı", "i")
@@ -87,24 +102,30 @@ class Window(Adw.ApplicationWindow):
         self._banner = Adw.Banner(use_markup=False)
 
         # Only the skin list scrolls, everything above it stays in place.
+        # The right margin is left to each part, so the list's scrollbar can sit in it
+        # and the list lines up with the groups above.
         skins = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         skins.append(self._build_skins())
+        self._skins.set_margin_end(PAGE_MARGIN)
         skins.append(self._build_skin_list())
         page = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=18,
-            margin_top=12,
-            margin_bottom=12,
-            margin_start=12,
-            margin_end=12,
+            margin_top=PAGE_MARGIN,
+            margin_bottom=PAGE_MARGIN,
+            margin_start=PAGE_MARGIN,
         )
-        settings = self._build_settings()
-        page.append(settings)
+        page.append(self._build_settings())
+        page.get_last_child().set_margin_end(PAGE_MARGIN)
         page.append(skins)
 
         self._toasts = Adw.ToastOverlay(child=Adw.Clamp(child=page))
         content = Adw.ToolbarView(content=self._toasts)
-        content.add_top_bar(Adw.HeaderBar(title_widget=self._title))
+        header = Adw.HeaderBar(title_widget=self._title)
+        about_button = Gtk.Button(icon_name="help-about-symbolic", tooltip_text=_("About Cursor for osu!"))
+        about_button.connect("clicked", lambda _button: _about_dialog().present(self))
+        header.pack_end(about_button)
+        content.add_top_bar(header)
         content.add_top_bar(self._banner)
         content.add_bottom_bar(self._build_reset())
         content.set_bottom_bar_style(Adw.ToolbarStyle.RAISED)
@@ -112,8 +133,7 @@ class Window(Adw.ApplicationWindow):
 
         # The list is still hidden here, so this is the height of everything else.
         fixed_height = content.measure(Gtk.Orientation.VERTICAL, -1)[0]
-        settings_height = settings.measure(Gtk.Orientation.VERTICAL, -1)[1]
-        self.set_default_size(560, fixed_height + settings_height * 2)
+        self.set_default_size(560, fixed_height + SKIN_LIST_DEFAULT_HEIGHT)
 
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop.connect("drop", self._on_drop)
@@ -142,17 +162,6 @@ class Window(Adw.ApplicationWindow):
         size_row.add_suffix(self._size_scale)
         group.add(size_row)
 
-        if gnome.has_game_cursor_size():
-            game_size = gnome.game_cursor_size()
-            use_button = Gtk.Button(label=_("Use"), valign=Gtk.Align.CENTER)
-            use_button.connect("clicked", lambda _button: self._size_scale.set_value(game_size))
-            game_row = Adw.ActionRow(
-                title=_("In-game size"),
-                subtitle=_("Your osu!lazer setting: {size}").format(size=f"{game_size:.2f}"),
-            )
-            game_row.add_suffix(use_button)
-            group.add(game_row)
-
         self._trail_row = Adw.SwitchRow(
             title=_("Trail"),
             subtitle=_("When off, only the cursor is left"),
@@ -160,6 +169,41 @@ class Window(Adw.ApplicationWindow):
         )
         self._trail_row.connect("notify::active", self._on_trail_toggled)
         group.add(self._trail_row)
+
+        # Starts closed every time the window opens.
+        self._more_settings = more = Adw.ExpanderRow(title=_("More settings"))
+        for row in self._build_more_settings():
+            more.add_row(row)
+        group.add(more)
+        return group
+
+    def _build_more_settings(self) -> list[Gtk.Widget]:
+        """The settings changed once and left alone, folded away under More settings."""
+        rows: list[Gtk.Widget] = []
+
+        # For people who keep osu!lazer somewhere the app doesn't look.
+        self._osu_row = Adw.ActionRow(title=_("osu!lazer folder"), subtitle_lines=1)
+        self._osu_auto_button = Gtk.Button(
+            icon_name="edit-undo-symbolic",
+            tooltip_text=_("Find it on its own again"),
+            valign=Gtk.Align.CENTER,
+        )
+        self._osu_auto_button.add_css_class("flat")
+        self._osu_auto_button.connect("clicked", lambda _button: self._set_osu_dir(None))
+        # Not "Choose folder", that button is right below for adding skins.
+        choose_button = Gtk.Button(label=_("Change"), valign=Gtk.Align.CENTER)
+        choose_button.connect("clicked", self._on_choose_osu_dir)
+        self._osu_row.add_suffix(self._osu_auto_button)
+        self._osu_row.add_suffix(choose_button)
+
+        # Always built, it is shown once the chosen folder has the game's settings.
+        use_button = Gtk.Button(label=_("Use"), valign=Gtk.Align.CENTER)
+        use_button.connect(
+            "clicked", lambda _button: self._size_scale.set_value(gnome.game_cursor_size())
+        )
+        self._game_row = Adw.ActionRow(title=_("In-game size"))
+        self._game_row.add_suffix(use_button)
+        rows.append(self._game_row)
 
         self._system_row = Adw.SwitchRow(
             title=_("Keep system cursors"),
@@ -175,29 +219,17 @@ class Window(Adw.ApplicationWindow):
             active=gnome.keep_system_cursors(),
         )
         self._system_row.connect("notify::active", self._on_system_toggled)
-        group.add(self._system_row)
+        rows.append(self._system_row)
 
-        exports = str(gnome.exports_dir()).replace(str(Path.home()), "~", 1)
         # A plain row with its own switch, so the button can sit before the switch.
         self._watch_switch = Gtk.Switch(active=gnome.watch_exports_enabled(), valign=Gtk.Align.CENTER)
         self._watch_switch.connect("notify::active", self._on_watch_toggled)
-        watch_row = Adw.ActionRow(
+        self._watch_row = watch_row = Adw.ActionRow(
             title=_("Watch osu! exports"),
-            subtitle=(
-                _("Skins you export from the game are added to the list on their own")
-                if gnome.osu_dir().is_dir()
-                else _("osu!lazer was not found. Exports are added once it is installed.")
-            ),
-            tooltip_text=_(
-                "While the app is open it watches osu!lazer's exports folder ({folder}) "
-                "and adds each skin you export to the list.\n"
-                "Exports made while the app is closed are added the next time it opens.\n"
-                "A skin you remove from the list doesn't come back unless you export it again."
-            ).format(folder=exports),
             activatable_widget=self._watch_switch,
         )
         add_all_button = Gtk.Button(
-            icon_name="list-add-symbolic",
+            label=_("Add all"),
             tooltip_text=_(
                 "Adds every skin in the exports folder to the list now, "
                 "including the ones you removed before.\n"
@@ -205,12 +237,69 @@ class Window(Adw.ApplicationWindow):
             ),
             valign=Gtk.Align.CENTER,
         )
-        add_all_button.add_css_class("flat")
         add_all_button.connect("clicked", self._on_add_all_exports)
         watch_row.add_suffix(add_all_button)
         watch_row.add_suffix(self._watch_switch)
-        group.add(watch_row)
-        return group
+        rows.append(watch_row)
+        rows.append(self._osu_row)
+
+        self._show_osu_dir()
+        return rows
+
+    def _show_osu_dir(self) -> None:
+        """Fill in the rows that depend on where osu!lazer is."""
+        home = str(Path.home())
+        folder = gnome.osu_dir()
+        found = folder.is_dir()
+        self._osu_row.set_subtitle(
+            str(folder).replace(home, "~", 1) if found
+            else _("Not found. Choose it if osu!lazer keeps its files somewhere else.")
+        )
+        self._osu_auto_button.set_visible(gnome.chosen_osu_dir() is not None)
+
+        self._game_row.set_visible(gnome.has_game_cursor_size())
+        self._game_row.set_subtitle(
+            _("Your osu!lazer setting: {size}").format(size=f"{gnome.game_cursor_size():.2f}")
+        )
+
+        self._watch_row.set_subtitle(
+            _("Skins you export from the game are added to the list on their own")
+            if found
+            else _("osu!lazer was not found. Exports are added once it is installed.")
+        )
+        self._watch_row.set_tooltip_text(_(
+            "While the app is open it watches osu!lazer's exports folder ({folder}) "
+            "and adds each skin you export to the list.\n"
+            "Exports made while the app is closed are added the next time it opens.\n"
+            "A skin you remove from the list doesn't come back unless you export it again."
+        ).format(folder=str(gnome.exports_dir()).replace(home, "~", 1)))
+
+    def _on_choose_osu_dir(self, _button) -> None:
+        dialog = Gtk.FileDialog(title=_("Choose the osu!lazer folder"))
+        folder = gnome.osu_dir()
+        if folder.is_dir():
+            dialog.set_initial_folder(Gio.File.new_for_path(str(folder)))
+        dialog.select_folder(self, None, self._on_osu_dir_chosen)
+
+    def _on_osu_dir_chosen(self, dialog, result) -> None:
+        try:
+            chosen = dialog.select_folder_finish(result)
+        except GLib.Error:
+            return  # the dialog was cancelled
+        if chosen.get_path():
+            self._set_osu_dir(chosen.get_path())
+
+    def _set_osu_dir(self, path: str | None) -> None:
+        try:
+            gnome.set_osu_dir(path)
+        except (SkinError, OSError) as failure:
+            self._toast(str(failure))
+            return
+        self._show_osu_dir()
+        # The exports of the new folder are looked at right away.
+        if self._watch_switch.get_active():
+            self._stop_watching_exports()
+            self._watch_exports()
 
     def _build_skins(self) -> Adw.PreferencesGroup:
         # The buttons get their own row so the description can use the full width.
@@ -245,6 +334,7 @@ class Window(Adw.ApplicationWindow):
         self._skins.add(Adw.PreferencesRow(child=buttons, activatable=False))
 
         self._search = Adw.EntryRow(title=_("Search"))
+        _hide_edit_icon(self._search)
         self._search.add_prefix(Gtk.Image(icon_name="system-search-symbolic"))
         self._search.connect("changed", lambda _row: self._apply_search())
         self._skins.add(self._search)
@@ -280,7 +370,31 @@ class Window(Adw.ApplicationWindow):
             vexpand=True,
             visible=False,
         )
+        self._skin_scroller.add_css_class("skin-scroller")
+        # The scrollbar is hidden without its visible property changing, so whether
+        # the list overflows is what tells if it is there.
+        self._skin_scroller.get_vadjustment().connect("changed", self._on_list_size_changed)
+        self._fit_list_to_scrollbar()
         return self._skin_scroller
+
+    def _on_list_size_changed(self, _adjustment) -> None:
+        # Margins can't change while GTK is laying the window out.
+        GLib.idle_add(self._fit_list_to_scrollbar)
+
+    def _fit_list_to_scrollbar(self) -> bool:
+        """Keep the list's right edge where the groups above end, with or without a scrollbar.
+
+        With overlay scrollbars turned off the scrollbar takes room of its own. It is made
+        as wide as the page margin and moved into it, see _add_style.
+        """
+        adjustment = self._skin_scroller.get_vadjustment()
+        overlay = (self._skin_scroller.get_overlay_scrolling()
+                   and Gtk.Settings.get_default().get_property("gtk-overlay-scrolling"))
+        shown = adjustment.get_upper() > adjustment.get_page_size() and not overlay
+        margin = 0 if shown else PAGE_MARGIN
+        if self._skin_list.get_margin_end() != margin:
+            self._skin_list.set_margin_end(margin)
+        return GLib.SOURCE_REMOVE
 
     def _build_no_match(self) -> Gtk.Box:
         """Shown inside the list when the search hides every skin."""
@@ -610,7 +724,9 @@ class Window(Adw.ApplicationWindow):
                 _("{name} is removed from the list and the previous cursor comes back.")
                 if skin.key == gnome.current_skin_key()
                 else _("{name} is removed from the list. The cursor you use now stays.")
-            ).format(name=skin.name),
+            ).format(name=skin.name)
+            # People worry the .osk or folder they chose goes too, it doesn't.
+            + "\n\n" + _("The original file or folder you added it from is not deleted."),
         )
         dialog.add_response("cancel", _("Cancel"))
         dialog.add_response("remove", _("Remove"))
@@ -632,29 +748,32 @@ class Window(Adw.ApplicationWindow):
         self._refresh()
 
     def _on_size_changed(self, _scale) -> None:
-        # Redrawing takes a moment, so wait until the slider stops moving.
-        if self._size_timer:
-            GLib.source_remove(self._size_timer)
-        self._size_timer = GLib.timeout_add(SIZE_SETTLE_MS, self._commit_size)
-
-    def _commit_size(self) -> bool:
-        self._size_timer = 0
+        # The cursor follows the slider while it is dragged, at most once per interval.
+        # Values that come in meanwhile collapse into the newest.
         self._pending_size = round(self._size_scale.get_value(), 2)
-        self._run_pending_size()
+        if not self._size_timer:
+            self._size_tick()
+
+    def _size_tick(self) -> bool:
+        self._size_timer = 0
+        if self._pending_size is not None:
+            self._run_pending_size()
+            self._size_timer = GLib.timeout_add(SIZE_INTERVAL_MS, self._size_tick)
         return GLib.SOURCE_REMOVE
 
     def _run_pending_size(self) -> None:
         if self._busy or self._pending_size is None:
             return
         size, self._pending_size = self._pending_size, None
-        self._run(lambda: gnome.set_cursor_size(size), None)
+        # The rest of the window stays as it is, it would flicker while the slider moves.
+        self._run(lambda: gnome.set_cursor_size(size), None, dim=False)
 
-    def _set_busy(self, busy: bool) -> None:
+    def _set_busy(self, busy: bool, dim: bool = True) -> None:
         self._busy = busy
         if self._busy_timer:
             GLib.source_remove(self._busy_timer)
             self._busy_timer = 0
-        if busy:
+        if busy and dim:
             self._busy_timer = GLib.timeout_add(BUSY_DIM_MS, self._dim_controls)
         else:
             self._set_controls_sensitive(True)
@@ -692,8 +811,9 @@ class Window(Adw.ApplicationWindow):
         job: Callable[[], object],
         success_message: str | Callable[..., str] | None,
         after_success: Callable[[], None] | None = None,
+        dim: bool = True,
     ) -> None:
-        self._set_busy(True)
+        self._set_busy(True, dim)
 
         def work() -> None:
             message = success_message
@@ -726,7 +846,8 @@ class Window(Adw.ApplicationWindow):
                 self._toast(success_message)
             if after_success:
                 after_success()
-        self._run_pending_size()
+        if not self._size_timer:  # otherwise the next interval tick picks it up
+            self._run_pending_size()
         if self._pending_apply is not None and not self._busy:
             path, self._pending_apply = self._pending_apply, None
             self._apply(path)
@@ -735,6 +856,32 @@ class Window(Adw.ApplicationWindow):
     def _on_reset(self, _button) -> None:
         if self._is_free():
             self._run(gnome.reset, _("Back to the previous cursor"))
+
+
+def _about_dialog() -> Adw.AboutDialog:
+    dialog = Adw.AboutDialog(
+        application_name="Cursor for osu!",
+        application_icon=APP_ID,
+        version=__version__,
+        developer_name="Egehan Kara",
+        comments=_("Use the cursor and cursor trail of your osu! skins on GNOME or KDE Plasma, outside the game.")
+        + "\n\n"
+        + _("Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!."),
+        website=REPOSITORY,
+        issue_url=f"{REPOSITORY}/issues",
+        license_type=Gtk.License.MIT_X11,
+        copyright="© 2026 Egehan Kara",
+    )
+    # Our own heading, libadwaita's Turkish "Kodlayan" for developers reads oddly.
+    dialog.add_credit_section(_("Developed by"), ["Egehan Kara https://github.com/egehankara"])
+    dialog.add_credit_section(_("KDE Plasma support"), ["MehmetAkifUgur https://github.com/MehmetAkifUgur"])
+    dialog.add_legal_section(
+        "osu!",
+        _("The cursor sizing and the trail are adapted from osu!.") + "\n© ppy Pty Ltd",
+        Gtk.License.MIT_X11,
+        None,
+    )
+    return dialog
 
 
 def run() -> int:
@@ -747,7 +894,14 @@ def run() -> int:
 def _add_style(_application: Adw.Application) -> None:
     Gtk.Window.set_default_icon_name(APP_ID)  # installed by install.sh, named after the app
     css = Gtk.CssProvider()
-    css.load_from_string("list.no-match { background: none; }")
+    css.load_from_string(
+        "list.no-match { background: none; }"
+        # As wide as the page margin, so it fits in it next to the skin list.
+        ".skin-scroller > scrollbar.vertical, .skin-scroller > scrollbar.vertical > range,"
+        " .skin-scroller > scrollbar.vertical trough { padding: 0; margin: 0; border: 0; min-width: 0; }"
+        f".skin-scroller > scrollbar.vertical slider {{ min-width: 6px; border: 0;"
+        f" margin: 0 {(PAGE_MARGIN - 6) // 2}px; }}"
+    )
     Gtk.StyleContext.add_provider_for_display(
         Gdk.Display.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )

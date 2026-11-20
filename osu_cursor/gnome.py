@@ -81,26 +81,65 @@ def skins_dir() -> Path:
     return data_dir() / "skins"
 
 
+# Files only an osu!lazer data folder has, at least one of them.
+OSU_DIR_MARKERS = ("client.realm", "game.ini", "framework.ini", "storage.ini")
+
+
+def _moved_to(base: Path) -> Path | None:
+    """The folder storage.ini in base points to, if it names one that exists."""
+    try:
+        match = re.search(
+            r"^FullPath\s*=\s*(.+?)\s*$", (base / "storage.ini").read_text(), re.MULTILINE
+        )
+    except (OSError, UnicodeDecodeError):
+        return None
+    return Path(match.group(1)) if match and Path(match.group(1)).is_dir() else None
+
+
 def osu_dir() -> Path:
     """Where osu!lazer keeps its settings and exports.
 
-    The game can be told to keep them in another folder, it then writes that folder
-    into storage.ini. The Flatpak build keeps them inside its own sandbox folder.
+    A folder chosen in the app comes first. Otherwise it is looked for: the game can be
+    told to keep its files in another folder, it then writes that folder into storage.ini.
+    The Flatpak build keeps them inside its own sandbox folder.
     """
+    chosen = chosen_osu_dir()
+    if chosen is not None and chosen.is_dir():
+        return _moved_to(chosen) or chosen
     default = data_dir().parent / "osu"
     flatpak = Path.home() / ".var/app/sh.ppy.osu/data/osu"
     for base in (default, flatpak):
-        try:
-            match = re.search(
-                r"^FullPath\s*=\s*(.+?)\s*$", (base / "storage.ini").read_text(), re.MULTILINE
-            )
-        except (OSError, UnicodeDecodeError):
-            match = None
-        if match and Path(match.group(1)).is_dir():
-            return Path(match.group(1))
+        moved = _moved_to(base)
+        if moved:
+            return moved
     if not default.is_dir() and flatpak.is_dir():
         return flatpak
     return default
+
+
+def chosen_osu_dir() -> Path | None:
+    """The osu!lazer folder picked by hand in the app, None when it is found on its own."""
+    chosen = _settings().get("osu_dir")
+    return Path(chosen) if isinstance(chosen, str) and chosen else None
+
+
+def set_osu_dir(path: str | os.PathLike | None) -> None:
+    """Use this folder as osu!lazer's, or look for it on its own again with None."""
+    if path is not None:
+        path = Path(path)
+        if not any((path / name).exists() for name in OSU_DIR_MARKERS):
+            raise SkinError(_(
+                "This doesn't look like an osu!lazer folder. "
+                "Choose the one that has game.ini and client.realm in it."
+            ))
+    with _write_lock:
+        settings = _settings()
+        if path is None:
+            settings.pop("osu_dir", None)
+        else:
+            settings["osu_dir"] = str(path)
+        data_dir().mkdir(parents=True, exist_ok=True)
+        _atomic_write(_settings_path(), json.dumps(settings).encode())
 
 
 def exports_dir() -> Path:
