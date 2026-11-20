@@ -10,6 +10,10 @@
 
 Use the cursor and cursor trail of your osu! skins on GNOME or KDE Plasma, outside the game.
 
+<p align="center">
+  <img src="data/screenshots/window-en.png" width="420" alt="The Cursor for osu! window with a list of skins">
+</p>
+
 KDE Plasma support by [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
 Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.
@@ -159,7 +163,7 @@ to the translated one. `python3 -m pytest` checks that every text has a translat
 
 Open **Cursor for osu!** from your applications and add a skin to the list with **Choose .osk** or **Choose folder** (for an unpacked skin folder), or drop `.osk` files and skin folders on the window. Click a skin in the list to apply it.
 
-Skins you export from osu!lazer are added on their own, the app watches the game's exports folder while it is open and catches up on new exports when it starts. A skin you remove from the list doesn't come back unless you export it again. This can be turned off with the **Watch osu! exports** switch. The **+** button next to it adds every export at once, removed skins included. Right-click a skin to rename it or open its folder. Removing the skin in use goes back to your previous cursor.
+Skins you export from osu!lazer are added on their own, the app watches the game's exports folder while it is open and catches up on new exports when it starts. A skin you remove from the list doesn't come back unless you export it again. This can be turned off with the **Watch osu! exports** switch under **More settings**. The **Add all** button next to it adds every export at once, removed skins included. If osu!lazer keeps its files somewhere the app doesn't look, pick the folder with **Change** next to **osu!lazer folder**. Right-click a skin to rename it or open its folder. Removing the skin in use goes back to your previous cursor.
 
 From the command line:
 
@@ -199,7 +203,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
 
 ## Türkçe
 
-osu! skin'lerindeki imleci ve cursor trail'i oyun dışında GNOME ve KDE Plasma'da kullanır.
+osu! skin'lerindeki imleci ve trail'i oyun dışında GNOME ve KDE Plasma'da kullanır.
+
+<p align="center">
+  <img src="data/screenshots/window-tr.png" width="420" alt="Skin listesiyle Cursor for osu! penceresi">
+</p>
 
 KDE Plasma desteği: [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
 
@@ -349,13 +357,13 @@ Başka bir dilde açmak için: `LANGUAGE=de cursor-for-osu`.
 
 Uygulamalardan **Cursor for osu!**'i aç, **.osk seç** veya **Klasör seç** ile ya da pencereye sürükleyerek `.osk` dosyalarını ve skin klasörlerini listeye ekle. Uygulamak için listeden bir skine tıkla.
 
-osu!lazer'den export ettiğin skin'ler kendiliğinden eklenir: uygulama açıkken oyunun exports klasörünü izler, açılınca da kapalıyken yapılan export'ları ekler. Listeden kaldırdığın bir skin, tekrar export etmedikçe geri gelmez. Bunu **osu! export'larını izle** anahtarıyla kapatabilirsin. Yanındaki **+** butonu, kaldırdıkların dahil bütün export'ları bir kerede ekler. Bir skine sağ tıklayarak ismini değiştirebilir veya klasörünü açabilirsin. Kullandığın skini kaldırınca önceki imlecine dönersin.
+osu!lazer'dan export ettiğin skin'ler kendiliğinden eklenir: uygulama açıkken oyunun exports klasörünü izler, açılınca da kapalıyken yapılan export'ları ekler. Listeden kaldırdığın bir skin, tekrar export etmedikçe geri gelmez. Bunu **Diğer ayarlar** altındaki **osu! export'larını izle** anahtarıyla kapatabilirsin. Yanındaki **Tümünü ekle** düğmesi, kaldırdıkların dahil bütün export'ları bir kerede ekler. osu!lazer dosyalarını uygulamanın bakmadığı bir yerde tutuyorsa, **osu!lazer klasörü** satırındaki **Değiştir** ile klasörü seçebilirsin. Bir skine sağ tıklayarak ismini değiştirebilir veya klasörünü açabilirsin. Kullandığın skini kaldırınca önceki imlecine dönersin.
 
 Komut satırından:
 
 ```sh
 cursor-for-osu apply skin.osk        # skin'i uygula
-cursor-for-osu size 1.2              # cursor boyutu, oyundaki gibi 0.1 ile 2.0 arası
+cursor-for-osu size 1.2              # imleç boyutu, oyundaki gibi 0.1 ile 2.0 arası
 cursor-for-osu reset                 # önceki imlece dön
 cursor-for-osu status
 cursor-for-osu uninstall
