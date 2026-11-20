@@ -93,6 +93,16 @@ fi
 rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
 mkdir -p "$extension_dir"
 cp "$source_dir/extension/$uuid/"* "$extension_dir/"
+# The Extensions app shows the version, it is the app's version.
+python3 - "$extension_dir/metadata.json" "$source_dir/osu_cursor/__init__.py" <<'EOF'
+import json, re, sys
+path, init = sys.argv[1:]
+metadata = json.load(open(path))
+metadata["version-name"] = re.search(r'__version__ = "(.+?)"', open(init).read()).group(1)
+with open(path, "w") as file:
+    json.dump(metadata, file, indent=2, ensure_ascii=False)
+    file.write("\n")
+EOF
 
 # GNOME only discovers new extensions at login, so turn it on for the next one.
 PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.gnome import enable_extension; enable_extension()' 2>/dev/null ||
