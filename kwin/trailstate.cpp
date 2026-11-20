@@ -117,38 +117,68 @@ void TrailParts::add(QPointF pos, qreal now)
 
 void TrailParts::move(const TrailConfig &config, QPointF pos, qreal now)
 {
+    if (config.disjoint) {
+        m_current = pos;
+        return;
+    }
     if (!m_anchor) {
         m_anchor = Part{pos, now};
-        if (config.disjoint) {
-            add(pos, now);
-        }
         return;
     }
     const Part from = *m_anchor;
     const QPointF delta = pos - from.pos;
-    if (config.disjoint) {
-        const qreal elapsed = now - from.born;
-        if (elapsed < StampInterval || delta.isNull()) {
-            return;
-        }
-        const int count = std::min(qRound(std::min(elapsed, config.fade()) / StampInterval) - 1, 8);
-        for (int i = count; i > 0; --i) {
-            const qreal age = i * StampInterval;
-            add(pos - delta * (age / elapsed), now - age);
-        }
-        add(pos, now);
-        m_anchor = Part{pos, now};
-    } else {
-        const qreal distance = std::hypot(delta.x(), delta.y());
-        const qreal end = distance - config.interval;
-        // Keep bounded work even after a very large pointer warp.
-        const qreal start = std::max(config.interval, end - MaxParts * config.interval);
-        for (qreal d = start; d < end; d += config.interval) {
-            const QPointF step = from.pos + delta * (d / distance);
-            add(step, now);
-            m_anchor = Part{step, now};
-        }
+    const qreal distance = std::hypot(delta.x(), delta.y());
+    const qreal end = distance - config.interval;
+    // Keep bounded work even after a very large pointer warp.
+    const qreal start = std::max(config.interval, end - MaxParts * config.interval);
+    for (qreal d = start; d < end; d += config.interval) {
+        const QPointF step = from.pos + delta * (d / distance);
+        add(step, now);
+        m_anchor = Part{step, now};
     }
+}
+
+void TrailParts::stamp(const TrailConfig &config, qreal now)
+{
+    if (!config.disjoint || !m_current) {
+        return;
+    }
+    const QPointF to = *m_current;
+    if (!m_stamped) {
+        add(to, now);
+        m_stamped = to;
+        m_lastStamp = now;
+        m_nextStamp = now + StampInterval;
+        m_lastMotion = now;
+        return;
+    }
+    if (now < m_nextStamp) {
+        return;
+    }
+    // Frames can come less often than 60 times a second. The parts missed since the
+    // last one go along the path, already aged. The trail clock stops while the cursor
+    // rests, so after a rest only the time actually moved is filled in.
+    const QPointF from = *m_stamped;
+    const qreal elapsed = now - m_lastStamp;
+    const int missing = qRound(elapsed / StampInterval) - 1;
+    const int longest = int(std::ceil(config.fade() / StampInterval)) - 1;
+    for (int k = std::min(missing, longest); k >= 1; --k) {
+        const qreal age = k * StampInterval;
+        add(from + (to - from) * (1 - age / elapsed), now - age);
+    }
+    add(to, now);
+    if (from != to) {
+        m_lastMotion = now;
+    }
+    m_lastStamp = now;
+    // Staying on a 60 Hz grid keeps the rate exact however frames fall around it.
+    m_nextStamp = now + StampInterval - std::fmod(now - m_nextStamp, StampInterval);
+    m_stamped = to;
+}
+
+bool TrailParts::settled(const TrailConfig &config, qreal now) const
+{
+    return config.disjoint && m_current && now - m_lastMotion > config.fade() + StampInterval;
 }
 
 void TrailParts::expire(qreal now, qreal fade)
@@ -161,6 +191,8 @@ void TrailParts::expire(qreal now, qreal fade)
 void TrailParts::stopGrowing()
 {
     m_anchor.reset();
+    m_current.reset();
+    m_stamped.reset();
 }
 
 void TrailParts::clear()

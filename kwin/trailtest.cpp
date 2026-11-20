@@ -58,12 +58,37 @@ int main()
 
     config->disjoint = true;
     parts.move(*config, {0, 0}, 0);
+    parts.stamp(*config, 0);
     parts.move(*config, {30, 0}, 50);
+    parts.stamp(*config, 50);
     require(parts.parts().size() == 4 && parts.parts().back().pos == QPointF(30, 0),
             "Disjoint trail must fill in stamps between frames");
     parts.expire(150, config->fade());
     require(parts.parts().size() == 3, "Only the oldest disjoint stamp has expired");
     parts.expire(200, config->fade());
     require(parts.parts().empty(), "All disjoint stamps must expire");
+
+    // A resting cursor keeps a stack under it, like in osu!lazer, which settles.
+    parts.clear();
+    const qreal frame = 1000.0 / 180;
+    qreal now = 0;
+    parts.move(*config, {0, 0}, now);
+    for (; now < 400; now += frame) {
+        parts.stamp(*config, now);
+        parts.expire(now, config->fade());
+    }
+    require(!parts.parts().empty(), "A resting cursor keeps its stack of disjoint parts");
+    require(parts.settled(*config, now), "The resting stack settles once nothing changes");
+
+    // Moving again after the rest adds one part, not a pile of catch-up parts.
+    const auto before = parts.parts().size();
+    parts.move(*config, {5, 0}, now);
+    for (const qreal end = now + 1000.0 / 60 + frame; now < end && parts.parts().back().pos != QPointF(5, 0);
+         now += frame) {
+        parts.stamp(*config, now);
+    }
+    require(parts.parts().size() == before + 1 && parts.parts().back().pos == QPointF(5, 0),
+            "Moving after a rest must not pile parts up at the cursor");
+    require(!parts.settled(*config, now), "A moving cursor is not settled");
     return EXIT_SUCCESS;
 }

@@ -59,6 +59,9 @@ public:
 
     ~TrailEffect() override
     {
+        if (m_ownCursor) {
+            effects->showCursor();
+        }
         // KWin also unloads effects when the session ends. Only when the user turned
         // the effect off does kwinrc stop saying it is enabled, then the app puts
         // the previous cursor back.
@@ -69,7 +72,7 @@ public:
 
     bool isActive() const override
     {
-        return m_pending.has_value() || !m_parts.parts().empty();
+        return m_ownCursor || m_pending.has_value() || !m_parts.parts().empty();
     }
 
     QString debug(const QString &parameter) const override
@@ -91,6 +94,7 @@ public:
     {
         const QRectF previous = m_bounds;
         if (m_config && isActive()) {
+            advanceClock();
             const qreal now = time();
             const QPointF pointer = m_mouse->pos();
             if (suppressed(pointer)) {
@@ -100,6 +104,7 @@ public:
                 if (point && matchesSkin()) {
                     m_parts.move(*m_config, *point, now);
                 }
+                m_parts.stamp(*m_config, now);
                 m_parts.expire(now, m_config->fade());
                 m_bounds = {};
                 for (const Part &part : m_parts.parts()) {
@@ -109,6 +114,11 @@ public:
         }
         data.paint |= damage(previous);
         data.paint |= damage(m_bounds);
+        if (m_ownCursor) {
+            const QRectF previousCursor = std::exchange(m_cursorRect, cursorRect(m_mouse->pos()));
+            data.paint |= damage(previousCursor);
+            data.paint |= damage(m_cursorRect);
+        }
 #ifdef KWIN_PREPAINT_WITHOUT_TIMESTAMP
         effects->prePaintScreen(data);
 #else
@@ -124,6 +134,7 @@ public:
             return false;
         }
         paintTrail(target, viewport, deviceRegion);
+        paintOwnCursor(target, viewport, deviceRegion);
         return true;
     }
 #else
@@ -132,13 +143,19 @@ public:
     {
         effects->paintScreen(target, viewport, mask, deviceRegion, screen);
         paintTrail(target, viewport, deviceRegion);
+        paintOwnCursor(target, viewport, deviceRegion);
     }
 #endif
 
     void postPaintScreen() override
     {
-        if (!m_bounds.isEmpty()) {
-            effects->addRepaint(damage(m_bounds));
+        if (m_running && m_config) {
+            if ((m_parts.parts().empty() && !m_pending) || m_parts.settled(*m_config, time())) {
+                // Nothing changes until the cursor moves again, so the screen can go idle.
+                m_running = false;
+            } else if (!m_bounds.isEmpty()) {
+                effects->addRepaint(damage(m_bounds));
+            }
         }
         effects->postPaintScreen();
     }
@@ -167,6 +184,111 @@ private:
         environment.insert(QStringLiteral("XDG_SESSION_TYPE"), QStringLiteral("wayland"));
         process.setProcessEnvironment(environment);
         process.startDetached();
+    }
+
+    // When KWin draws the cursor into the scene instead of on its own hardware plane,
+    // which happens on some GPUs, the trail would land on top of it. So while the skin
+    // cursor is shown, the real one is hidden and drawn here, after the trail, like osu!.
+    QRectF cursorRect(QPointF pos) const
+    {
+        if (m_cursorImage.isNull()) {
+            return {};
+        }
+        return QRectF(pos - m_cursorHotspot, QSizeF(m_cursorImage.size()) / m_cursorImage.devicePixelRatio());
+    }
+
+    void loadCursorImage()
+    {
+        const PlatformCursorImage cursor = effects->cursorImage();
+        m_cursorImage = cursor.image();
+        m_cursorHotspot = cursor.hotSpot();
+        if (m_cursorTexture) {
+            effects->makeOpenGLContextCurrent();
+            m_cursorTexture.reset();
+        }
+    }
+
+    void updateOwnCursor()
+    {
+        const QPointF pos = m_mouse->pos();
+        const bool wanted = m_config && !suppressed(pos) && matchesSkin();
+        if (wanted == m_ownCursor) {
+            return;
+        }
+        // Set first: hiding the cursor emits hiddenChanged, which comes back here.
+        m_ownCursor = wanted;
+        if (wanted) {
+            loadCursorImage();
+            effects->hideCursor();
+        } else {
+            effects->showCursor();
+        }
+        m_cursorRect = cursorRect(pos);
+        effects->addRepaint(damage(m_cursorRect));
+    }
+
+    void paintOwnCursor(const RenderTarget &target, const RenderViewport &viewport, const Region &deviceRegion)
+    {
+        if (!m_ownCursor || m_cursorImage.isNull() || !viewport.renderRect().intersects(RectF(m_cursorRect))) {
+            return;
+        }
+        const Region visible = deviceRegion.intersected(viewport.deviceRect()).intersected(target.transformedRect());
+        if (effects->compositingType() == QPainterCompositing) {
+#ifdef KWIN_PAINT_RETURNS_BOOL
+            QImage *image = target.image();
+            if (!image || image->isNull()) {
+                return;
+            }
+            QPainter painter(image);
+            const qreal inverseDpr = 1.0 / image->devicePixelRatio();
+            painter.scale(inverseDpr, inverseDpr);
+            QRegion clip;
+            for (const Rect &rect : visible.rects()) {
+                clip += QRect(rect);
+            }
+            painter.setClipRegion(clip);
+            painter.drawImage(QRectF(viewport.mapToDeviceCoordinates(RectF(m_cursorRect))), m_cursorImage);
+#else
+            QPainter *painter = effects->scenePainter();
+            painter->save();
+            QRegion clip;
+            for (const Rect &rect : visible.rects()) {
+                clip += QRect(viewport.mapFromDeviceCoordinatesContained(rect));
+            }
+            painter->setClipRegion(clip, Qt::IntersectClip);
+            painter->drawImage(m_cursorRect, m_cursorImage);
+            painter->restore();
+#endif
+            return;
+        }
+        if (!m_cursorTexture) {
+            m_cursorTexture = GLTexture::upload(m_cursorImage);
+            if (!m_cursorTexture) {
+                return;
+            }
+            m_cursorTexture->setFilter(GL_LINEAR);
+            m_cursorTexture->setWrapMode(GL_CLAMP_TO_EDGE);
+        }
+        const Rect device = viewport.mapToDeviceCoordinatesAligned(RectF(m_cursorRect));
+        const Region clip = visible.intersected(device);
+        if (clip.isEmpty()) {
+            return;
+        }
+        ShaderBinder shader(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
+        shader.shader()->setColorspaceUniforms(ColorDescription::sRGB, target.colorDescription(),
+                                               RenderingIntent::Perceptual);
+        // Whole device pixels, so the cursor stays as sharp as KWin's own.
+        QMatrix4x4 matrix = viewport.projectionMatrix();
+        const qreal scale = viewport.scale();
+        matrix.translate(std::round(m_cursorRect.x() * scale), std::round(m_cursorRect.y() * scale));
+        shader.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, matrix);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_SCISSOR_TEST);
+        m_cursorTexture->render(viewport.transform().map(clip, target.transformedSize()),
+                                m_cursorRect.size() * scale, true);
+        glDisable(GL_SCISSOR_TEST);
+        glDisable(GL_BLEND);
     }
 
     void paintTrail(const RenderTarget &target, const RenderViewport &viewport, const Region &deviceRegion)
@@ -223,7 +345,28 @@ private:
         glDisable(GL_BLEND);
     }
 
-    qreal time() const { return m_clock.nsecsElapsed() / 1000000.0; }
+    // Trail time: it only runs while the trail changes. Stopped at rest, it picks up
+    // where it left off, so a rest is never mistaken for missed frames.
+    qreal time() const { return m_time; }
+
+    qreal wallTime() const { return m_clock.nsecsElapsed() / 1000000.0; }
+
+    void startClock()
+    {
+        if (!m_running) {
+            m_running = true;
+            m_lastWall = wallTime();
+        }
+    }
+
+    void advanceClock()
+    {
+        if (m_running) {
+            const qreal wall = wallTime();
+            m_time += wall - m_lastWall;
+            m_lastWall = wall;
+        }
+    }
 
     qreal opacity(const Part &part, qreal now) const
     {
@@ -286,6 +429,7 @@ private:
     {
         m_pending.reset();
         m_parts.clear();
+        m_running = false;
         if (!m_bounds.isEmpty()) {
             effects->addRepaint(damage(m_bounds));
             m_bounds = {};
@@ -309,12 +453,13 @@ private:
             m_texture.reset();
         }
         m_config = readTrail(m_directory, m_invalid);
+        updateOwnCursor();
     }
 
     bool suppressed(QPointF pos) const
     {
         if (!m_config || effects->isScreenLocked() || effects->hasActiveFullScreenEffect()
-            || effects->isCursorHidden() || !m_mouse->source() || m_mouse->source()->isBlank()
+            || (effects->isCursorHidden() && !m_ownCursor) || !m_mouse->source() || m_mouse->source()->isBlank()
             || m_mouse->themeName() != m_config->theme) {
             return true;
         }
@@ -342,19 +487,33 @@ private:
 
     void cursorChanged()
     {
+        if (m_ownCursor) {
+            loadCursorImage();
+            effects->addRepaint(damage(m_cursorRect));
+        }
+        updateOwnCursor();
         if (suppressed(m_mouse->pos())) {
             clear();
         } else if (!matchesSkin()) {
+            // Another cursor shape: no new parts, the ones on screen fade out.
             m_pending.reset();
             m_parts.stopGrowing();
+            startClock();
+            effects->addRepaint(damage(m_bounds));
         }
     }
 
     void pointerMoved(QPointF pos)
     {
+        updateOwnCursor();
+        if (m_ownCursor) {
+            effects->addRepaint(damage(m_cursorRect));
+            effects->addRepaint(damage(cursorRect(pos)));
+        }
         if (suppressed(pos)) {
             clear();
         } else if (matchesSkin()) {
+            startClock();
             const bool scheduled = m_pending.has_value();
             m_pending = pos;
             if (!scheduled) {
@@ -368,12 +527,20 @@ private:
     QFileSystemWatcher m_watcher;
     QTimer m_reloadTimer;
     QElapsedTimer m_clock;
+    qreal m_time = 0;
+    qreal m_lastWall = 0;
+    bool m_running = false;
     bool m_invalid = false;
     std::optional<TrailConfig> m_config;
     std::unique_ptr<GLTexture> m_texture;
     TrailParts m_parts;
     std::optional<QPointF> m_pending;
     QRectF m_bounds;
+    bool m_ownCursor = false;
+    QImage m_cursorImage;
+    QPointF m_cursorHotspot;
+    std::unique_ptr<GLTexture> m_cursorTexture;
+    QRectF m_cursorRect;
 };
 
 KWIN_EFFECT_FACTORY_SUPPORTED(TrailEffect, "metadata.json",
