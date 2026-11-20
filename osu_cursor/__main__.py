@@ -29,7 +29,8 @@ def _uninstall(keep_data: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="cursor-for-osu")
-    commands = parser.add_subparsers(dest="command")
+    # effect-off and effect-on are run by the KWin effect, not by people, so they aren't listed.
+    commands = parser.add_subparsers(dest="command", metavar="{apply,size,reset,status,uninstall}")
     apply_parser = commands.add_parser("apply", help=_("apply a skin"))
     apply_parser.add_argument("skin", help=_(".osk file or skin folder"))
     apply_parser.add_argument(
@@ -45,6 +46,8 @@ def main() -> int:
     uninstall_parser.add_argument(
         "--keep-data", action="store_true", help=_("keep the skin list and settings")
     )
+    commands.add_parser("effect-off")
+    commands.add_parser("effect-on")
     arguments = parser.parse_args()
 
     if arguments.command is None:
@@ -53,6 +56,16 @@ def main() -> int:
         return run()
     if arguments.command == "uninstall":
         return _uninstall(arguments.keep_data)
+    if arguments.command in ("effect-off", "effect-on"):
+        try:
+            if arguments.command == "effect-off":
+                gnome.plasma_effect_turned_off()
+            else:
+                gnome.plasma_effect_turned_on()
+        except SkinError as error:
+            print(error, file=sys.stderr)
+            return 1
+        return 0
 
     try:
         if arguments.command == "apply":

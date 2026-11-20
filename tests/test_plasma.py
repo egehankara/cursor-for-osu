@@ -161,3 +161,35 @@ def test_apply_theme_persists_size_or_restores_settings(monkeypatch, status, exp
     else:
         plasma.apply_theme("new", 36)
     assert settings == expected
+
+
+def test_turning_the_effect_off_and_on_swaps_the_cursor(desktop):
+    skin, settings = desktop
+    gnome.apply_skin(skin)
+    theme = settings[0]
+
+    assert gnome.plasma_effect_turned_off() == "breeze_cursors"
+    assert settings == ["breeze_cursors", 36]
+    assert gnome.plasma_effect_turned_off() is None  # nothing of ours to take off
+
+    assert gnome.plasma_effect_turned_on() == theme
+    assert settings == [theme, 36]
+    assert gnome.plasma_effect_turned_on() is None  # only once
+
+
+def test_turning_the_effect_on_leaves_a_cursor_chosen_meanwhile(desktop):
+    skin, settings = desktop
+    gnome.apply_skin(skin)
+    gnome.plasma_effect_turned_off()
+    settings[0] = "Adwaita"  # picked in System Settings while the effect was off
+    assert gnome.plasma_effect_turned_on() is None
+    assert settings[0] == "Adwaita"
+
+
+def test_reset_forgets_the_cursor_the_effect_took_off(desktop):
+    skin, settings = desktop
+    gnome.apply_skin(skin)
+    gnome.plasma_effect_turned_off()
+    gnome.reset()
+    assert gnome.plasma_effect_turned_on() is None
+    assert settings[0] == "breeze_cursors"

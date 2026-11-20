@@ -11,10 +11,15 @@
 #include <opengl/glshadermanager.h>
 #include <opengl/gltexture.h>
 
+#include <KConfig>
+#include <KConfigGroup>
+
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QPainter>
+#include <QProcess>
 #include <QStandardPaths>
 #include <QTimer>
 
@@ -46,6 +51,20 @@ public:
         connect(&m_watcher, &QFileSystemWatcher::directoryChanged, &m_reloadTimer, qOverload<>(&QTimer::start));
         connect(&m_reloadTimer, &QTimer::timeout, this, &TrailEffect::reload);
         reload();
+        // Turned on again after being turned off: the app brings the skin cursor back.
+        if (QFileInfo::exists(m_directory + QStringLiteral("/effect-off.json"))) {
+            runApp(QStringLiteral("effect-on"));
+        }
+    }
+
+    ~TrailEffect() override
+    {
+        // KWin also unloads effects when the session ends. Only when the user turned
+        // the effect off does kwinrc stop saying it is enabled, then the app puts
+        // the previous cursor back.
+        if (!enabledInSettings()) {
+            runApp(QStringLiteral("effect-off"));
+        }
     }
 
     bool isActive() const override
@@ -125,6 +144,31 @@ public:
     }
 
 private:
+    static bool enabledInSettings()
+    {
+        const KConfig kwinrc(QStringLiteral("kwinrc"), KConfig::NoGlobals);
+        return KConfigGroup(&kwinrc, QStringLiteral("Plugins"))
+            .readEntry(QStringLiteral("osu-cursor-trailEnabled"), false);
+    }
+
+    // The cursor theme is changed by the app, which already knows how to do it on Plasma.
+    static void runApp(const QString &command)
+    {
+        const QString app = QStandardPaths::findExecutable(
+            QStringLiteral("cursor-for-osu"), {QDir::homePath() + QStringLiteral("/.local/bin")});
+        if (app.isEmpty()) {
+            return;
+        }
+        QProcess process;
+        process.setProgram(app);
+        process.setArguments({command});
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        environment.insert(QStringLiteral("XDG_CURRENT_DESKTOP"), QStringLiteral("KDE"));
+        environment.insert(QStringLiteral("XDG_SESSION_TYPE"), QStringLiteral("wayland"));
+        process.setProcessEnvironment(environment);
+        process.startDetached();
+    }
+
     void paintTrail(const RenderTarget &target, const RenderViewport &viewport, const Region &deviceRegion)
     {
         if (m_parts.parts().empty() || !viewport.renderRect().intersects(RectF(m_bounds))) {

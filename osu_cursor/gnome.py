@@ -942,6 +942,7 @@ def _reset() -> str | None:
         _remove_old_themes(keep=None)
         shutil.rmtree(_source_dir(), ignore_errors=True)
         previous_path.unlink(missing_ok=True)
+        _plasma_effect_off_path().unlink(missing_ok=True)
         return restored
 
     previous_path = data_dir() / "previous.json"
@@ -965,6 +966,52 @@ def _reset() -> str | None:
     previous_path.unlink(missing_ok=True)
     (data_dir() / "extension-off.json").unlink(missing_ok=True)
     return restored
+
+
+def _plasma_effect_off_path() -> Path:
+    return data_dir() / "plasma" / "effect-off.json"
+
+
+def plasma_effect_turned_off() -> str | None:
+    """The KWin effect was turned off: put the cursor from before the first skin back.
+
+    The skin cursor is remembered, so turning the effect on again brings it back.
+    Called by the effect itself, see kwin/trail.cpp. Returns the theme put back.
+    """
+    with _desktop_lock():
+        current, size = plasma.cursor_settings()
+        previous_path = _desktop_dir() / "previous.json"
+        if not plasma.THEME_PATTERN.fullmatch(current) or not previous_path.is_file():
+            return None
+        theme = _plasma_previous(previous_path)[0]
+        _atomic_write(_plasma_effect_off_path(),
+                      json.dumps({"theme": current, "previous": theme}).encode())
+        plasma.apply_theme(theme, size)
+        return theme
+
+
+def plasma_effect_turned_on() -> str | None:
+    """The KWin effect was turned on again: bring the skin cursor back.
+
+    Only if the effect took it away and nothing changed the cursor since.
+    Returns the skin theme put back.
+    """
+    with _desktop_lock():
+        path = _plasma_effect_off_path()
+        try:
+            off = json.loads(path.read_text())
+        except (OSError, ValueError):
+            return None
+        path.unlink(missing_ok=True)
+        if not isinstance(off, dict):
+            return None
+        theme, previous = off.get("theme"), off.get("previous")
+        current, size = plasma.cursor_settings()
+        if (isinstance(theme, str) and plasma.THEME_PATTERN.fullmatch(theme)
+                and current == previous and (icons_dir() / theme / THEME_MARKER).is_file()):
+            plasma.apply_theme(theme, size)
+            return theme
+        return None
 
 
 def current_skin() -> str | None:
