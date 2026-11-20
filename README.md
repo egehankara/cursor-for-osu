@@ -8,6 +8,27 @@
 
 ## English
 
+### Windows 11 x64
+
+Extract the portable ZIP and run `CursorForOsu.exe`. Pick a `.osk` file or skin folder,
+or drop it on the window. Select its card to apply it. The **Trail** switch controls
+the desktop trail. Closing the window keeps the trail running in the background.
+Use the Cursor for osu! icon in the Windows notification area to reopen the window or
+quit the app. Quitting stops the trail and keeps the skin cursor for the Windows session.
+Use **Go back to the previous cursor** to reload your Windows pointer scheme.
+
+To run or package from source on Windows with 64-bit Python 3.11:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r packaging/windows/requirements.txt
+.\.venv\Scripts\python.exe -m osu_cursor
+.\.venv\Scripts\python.exe packaging/windows/build.py
+```
+
+The ZIP is written to `build/windows/CursorForOsu-windows-x64.zip`. Skin copies and
+preferences are saved in `%LOCALAPPDATA%\CursorForOsu`.
+
 Use the cursor and cursor trail of your osu! skins on GNOME or KDE Plasma, outside the game.
 
 <p align="center">
@@ -202,6 +223,27 @@ ctest --test-dir build --output-on-failure   # KWin trail, after building it
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
 
 ## Türkçe
+
+### Windows 11 x64
+
+Taşınabilir ZIP’i aç ve `CursorForOsu.exe` dosyasını çalıştır. `.osk` dosyasını veya
+skin klasörünü seç ya da pencereye sürükle. Uygulamak için skin kartına tıkla.
+**Trail** ayarı masaüstündeki izi açıp kapatır. Pencereyi kapattığında iz arka planda
+çalışmaya devam eder. Pencereyi geri açmak veya uygulamadan çıkmak için Windows bildirim
+alanındaki Cursor for osu! simgesini kullan. Uygulamadan çıkınca iz durur ve skin imleci
+Windows oturumunda kalır. Windows imleç şemana dönmek için **Önceki imlece dön** düğmesini kullan.
+
+64 bit Python 3.11 ile kaynaktan çalıştırmak ve paketlemek için PowerShell’de şu komutları çalıştır.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r packaging/windows/requirements.txt
+.\.venv\Scripts\python.exe -m osu_cursor
+.\.venv\Scripts\python.exe packaging/windows/build.py
+```
+
+ZIP dosyası `build/windows/CursorForOsu-windows-x64.zip` yoluna oluşturulur.
+Skin kopyaları ve ayarlar `%LOCALAPPDATA%\CursorForOsu` altında saklanır.
 
 osu! skin'lerindeki imleci ve trail'i oyun dışında GNOME ve KDE Plasma'da kullanır.
 

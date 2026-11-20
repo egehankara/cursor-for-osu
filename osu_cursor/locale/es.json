@@ -136,5 +136,7 @@
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Activa Cursor for osu! Trail en los efectos de escritorio de Plasma.",
   "The KWin trail effect is unavailable. Build it for your installed KWin version.": "El efecto de estela de KWin no está disponible. Compílalo para tu versión de KWin.",
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "Instalado. Compila y activa por separado el efecto de estela en KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Ejecuta reset desde una sesión Wayland de Plasma antes de desinstalar."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Ejecuta reset desde una sesión Wayland de Plasma antes de desinstalar.",
+  "Open Cursor for osu!": "Abrir Cursor for osu!",
+  "Quit Cursor for osu!": "Salir de Cursor for osu!"
 }

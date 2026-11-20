@@ -136,5 +136,7 @@
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Activez Cursor for osu! Trail dans les effets du bureau de Plasma.",
   "The KWin trail effect is unavailable. Build it for your installed KWin version.": "L’effet de traînée KWin est indisponible. Compilez-le pour votre version de KWin.",
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "Installation terminée. Compilez et activez séparément l’effet de traînée dans KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Exécutez reset depuis une session Plasma sous Wayland avant la désinstallation."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Exécutez reset depuis une session Plasma sous Wayland avant la désinstallation.",
+  "Open Cursor for osu!": "Ouvrir Cursor for osu!",
+  "Quit Cursor for osu!": "Quitter Cursor for osu!"
 }

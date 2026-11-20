@@ -102,8 +102,11 @@ def read_cursor_files(path: str | Path) -> dict[str, bytes]:
         files = {}
         for name, info in chosen.items():
             if _is_wanted(name) and info.file_size <= MAX_FILE_BYTES:
-                with archive.open(info) as handle:
-                    files[name] = handle.read(MAX_FILE_BYTES + 1)
+                try:
+                    with archive.open(info) as handle:
+                        files[name] = handle.read(MAX_FILE_BYTES + 1)
+                except (zipfile.BadZipFile, RuntimeError, NotImplementedError, OSError) as error:
+                    raise SkinError(_("{name} is not a valid .osk file.").format(name=path.name)) from error
         return files
 
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import hashlib
-import io
 import json
 import os
 import re
@@ -14,10 +13,14 @@ import threading
 import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
 from pathlib import Path
 
-from . import plasma, render, system, xcursor
+from . import library, plasma, render, system, xcursor
+from .library import (
+    NAME_ENTRY, LibrarySkin, Result, _atomic_write, _custom_name, _files_key, _previews,
+    _store_skin, _stored_skins, _write_archive, add_skin, add_skins, data_dir, library_skins,
+    skin_key, skins_dir,
+)
 from .i18n import _
 from .skin import Skin, SkinError, read_cursor_files, skin_from_files, skin_stem
 
@@ -25,18 +28,11 @@ EXTENSION_UUID = "cursor-for-osu-trail@egehankara.github.io"
 OLD_EXTENSION_UUIDS = ("osu-cursor-trail@xrayzack1010.github.io",)  # earlier names, turned off when installing
 THEME_PATTERN = re.compile(r"^osu-cursor-[0-9a-f]{12}$")
 THEME_MARKER = ".osu-cursor"
-NAME_ENTRY = "display-name.txt"  # the name given in the app, kept inside the archive
-MAX_NAME_BYTES = 1024
 EXTENSION_STATE_ACTIVE = 1
 EXTENSION_STATE_INACTIVE = 2
 EXTENSION_STATE_ERROR = 3
 EXTENSION_STATE_OUT_OF_DATE = 4
 EXTENSION_STATE_INITIALIZED = 6
-# The skin cards show the cursor 56 pixels tall. The pictures are drawn at twice that,
-# so they stay sharp on a scaled screen. Without a trail the picture is square, which
-# puts the cursor in the middle of the card.
-PREVIEW_HEIGHT = 112
-PREVIEW_TRAIL_WIDTH = 420
 MIN_CURSOR_SIZE = 0.1  # same limits as the game's cursor size slider
 MAX_CURSOR_SIZE = 2.0
 MIN_SCREEN_SCALING = 0.2  # lower limit of the game's screen scaling sliders
@@ -55,34 +51,6 @@ size_hor col-resize split_h ns-resize v_double_arrow sb_v_double_arrow size_ver
 row-resize split_v nesw-resize fd_double_arrow size_bdiag nwse-resize bd_double_arrow
 size_fdiag zoom-in zoom-out pirate center_ptr
 """.split()
-
-
-@dataclass
-class Result:
-    skin_name: str
-    has_trail: bool
-    trail_active: bool
-    size_px: int
-
-
-@dataclass
-class LibrarySkin:
-    path: Path
-    name: str
-    key: str  # same for skins whose cursor files are identical
-    has_trail: bool
-    preview_png: bytes
-    author: str = ""
-
-
-def data_dir() -> Path:
-    base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local/share")
-    return Path(base) / "osu-cursor"
-
-
-def skins_dir() -> Path:
-    """Where the skins added in the app are kept, one cursor-only folder each."""
-    return data_dir() / "skins"
 
 
 # Files only an osu!lazer data folder has, at least one of them.
@@ -345,13 +313,6 @@ def _desktop_lock() -> Iterator[None]:
         yield
 
 
-def _atomic_write(path: Path, data: bytes) -> None:
-    # Each writer gets its own temporary file, so two writes can't mix.
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
-    temporary.write_bytes(data)
-    temporary.replace(path)
-
-
 def _write_trail_state(
     skin: Skin, scale: float, cursor_size: float, own_cursor: xcursor.Frame | None,
     *, theme: str | None = None,
@@ -592,128 +553,6 @@ def set_trail_enabled(enabled: bool) -> None:
             _atomic_write(path, json.dumps(state, ensure_ascii=False).encode())
 
 
-def _files_key(files: dict[str, bytes]) -> str:
-    digest = hashlib.sha256()
-    for name in sorted(files):
-        digest.update(name.encode())
-        digest.update(files[name])
-    return digest.hexdigest()
-
-
-def _write_archive(path: Path, files: dict[str, bytes]) -> None:
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w") as archive:
-        for name, data in files.items():
-            archive.writestr(name, data)
-    _atomic_write(path, buffer.getvalue())
-
-
-def _migrate_archives() -> None:
-    """Turn the .osk files of older versions into folders."""
-    for path in sorted(skins_dir().glob("*.osk")):
-        if not path.is_file():
-            continue
-        try:
-            files = read_cursor_files(path)
-        except (SkinError, zipfile.BadZipFile, OSError):
-            continue
-        custom_name = _custom_name(path)
-        if custom_name:
-            files[NAME_ENTRY] = custom_name.encode()
-        _store_skin(files, path.stem)
-        path.unlink()
-
-
-def _stored_skins() -> Iterator[tuple[Path, dict[str, bytes]]]:
-    """The readable skin folders in the library, with their cursor files."""
-    directory = skins_dir()
-    if not directory.is_dir():
-        return
-    _migrate_archives()
-    for path in sorted(directory.iterdir()):
-        if not path.is_dir() or path.name.startswith("."):
-            continue
-        try:
-            yield path, read_cursor_files(path)
-        except (SkinError, OSError):  # OSError: it was removed while the list was being read
-            continue
-
-
-# Previews already drawn, by the skin's files. The list is read again after every
-# add, rename or remove, and drawing a trail is the slow part of reading it.
-_previews: dict[str, bytes] = {}
-_previews_lock = threading.Lock()  # the window can read the list from two jobs at once
-
-
-def _preview_png(skin: Skin, key: str) -> bytes:
-    with _previews_lock:
-        png = _previews.get(key)
-    if png is None:
-        image = io.BytesIO()
-        width = PREVIEW_TRAIL_WIDTH if skin.trail else PREVIEW_HEIGHT
-        render.preview(skin, width, PREVIEW_HEIGHT).save(image, "PNG")
-        png = image.getvalue()
-        with _previews_lock:
-            _previews[key] = png
-    return png
-
-
-def library_skins() -> list[LibrarySkin]:
-    """The skins added in the app, sorted by name."""
-    skins = []
-    for path, files in _stored_skins():
-        try:
-            skin = skin_from_files(files, path.name)
-        except SkinError:
-            continue
-        key = _files_key(files)
-        skins.append(
-            LibrarySkin(
-                path,
-                _custom_name(path) or " ".join(skin.name.split()),
-                key,
-                skin.trail is not None,
-                _preview_png(skin, key),
-                skin.author,
-            )
-        )
-    # Forget the previews of removed skins.
-    with _previews_lock:
-        for key in _previews.keys() - {skin.key for skin in skins}:
-            del _previews[key]
-    return sorted(skins, key=lambda skin: skin.name.casefold())
-
-
-def skin_key(path: str | os.PathLike) -> str:
-    """What add_skin compares, the same for skins whose cursor files are identical."""
-    return _files_key(read_cursor_files(path))
-
-
-def add_skin(path: str | os.PathLike) -> None:
-    """Copy the cursor files of a skin into the library. The original is left alone."""
-    files = read_cursor_files(path)
-    stem = skin_stem(path)
-    skin_from_files(files, stem)  # refuses skins with no usable cursor
-
-    key = _files_key(files)
-    if any(_files_key(stored) == key for _path, stored in _stored_skins()):
-        raise SkinError(_("This skin is already in the list."))
-
-    _store_skin(files, stem)
-
-
-def add_skins(paths: list[str]) -> tuple[int, int]:
-    """Add several skins, going on after a bad one. Returns (added, skipped)."""
-    added = skipped = 0
-    for path in paths:
-        try:
-            add_skin(path)
-            added += 1
-        except (SkinError, zipfile.BadZipFile, OSError):
-            skipped += 1
-    return added, skipped
-
-
 def add_new_exports(everything: bool = False) -> int:
     """Add the skins exported from osu!lazer since the last look. Returns how many were new.
 
@@ -767,69 +606,18 @@ def add_new_exports(everything: bool = False) -> int:
     return added
 
 
-def _store_skin(files: dict[str, bytes], stem: str) -> None:
-    directory = skins_dir()
-    directory.mkdir(parents=True, exist_ok=True)
-    stem = stem.lstrip(".") or "skin"  # names starting with a dot are skipped as temporary
-    target = directory / stem
-    number = 2
-    while target.exists():
-        target = directory / f"{stem} ({number})"
-        number += 1
-
-    temporary = directory / f".{target.name}.tmp"
-    shutil.rmtree(temporary, ignore_errors=True)
-    temporary.mkdir()
-    for name, data in files.items():
-        (temporary / name).write_bytes(data)
-    temporary.rename(target)
-
-
 def remove_skin(path: str | os.PathLike) -> None:
     """Delete a skin from the library. If it is in use, go back to the previous cursor."""
-    path = Path(path)
-    if path.parent != skins_dir():
-        raise SkinError(_("This file is not part of the skin list."))
+    path = library.library_path(path)
     if path.exists():
         in_use = _files_key(read_cursor_files(path)) == current_skin_key()
         if in_use:
             reset()
-        shutil.rmtree(path)
+        library.delete_skin(path)
 
 
-def _custom_name(path: Path | str | os.PathLike) -> str | None:
-    """The name given to a skin in the app, if it has one."""
-    path = Path(path)
-    try:
-        if path.is_dir():
-            entry = path / NAME_ENTRY
-            if entry.stat().st_size > MAX_NAME_BYTES:
-                return None
-            data = entry.read_bytes()
-        else:
-            with zipfile.ZipFile(path) as archive:
-                info = archive.getinfo(NAME_ENTRY)
-                if info.file_size > MAX_NAME_BYTES:
-                    return None
-                data = archive.read(info)
-        return data.decode().strip() or None
-    except (KeyError, OSError, UnicodeDecodeError, zipfile.BadZipFile):
-        return None
-
-
-def rename_skin(path: str | os.PathLike, name: str) -> None:
-    """Give a library skin a new name. The skin's own files stay as they are."""
-    path = Path(path)
-    if path.parent != skins_dir():
-        raise SkinError(_("This file is not part of the skin list."))
-    name = " ".join(name.split())
-    if not name:
-        raise SkinError(_("The name can't be empty."))
-    if len(name.encode()) > MAX_NAME_BYTES:
-        raise SkinError(_("This name is too long."))
-
-    files = read_cursor_files(path)
-    _atomic_write(path / NAME_ENTRY, name.encode())
+def rename_skin(path: Path | str | os.PathLike, name: str) -> None:
+    files, name = library.rename_skin(path, name)
 
     source = _current_source()
     if source is not None:

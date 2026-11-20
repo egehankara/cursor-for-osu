@@ -40,6 +40,12 @@ def _requested() -> list[str]:
         if value:
             # LANGUAGE may list several, the others hold one.
             return value.split(":") if variable == "LANGUAGE" else [value]
+    if sys.platform == "win32":
+        import ctypes
+        import locale
+
+        language = locale.windows_locale.get(ctypes.windll.kernel32.GetUserDefaultUILanguage())
+        return [language] if language else []
     return []
 
 

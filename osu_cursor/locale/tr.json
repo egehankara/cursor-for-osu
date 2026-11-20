@@ -136,5 +136,7 @@
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Plasma Masaüstü Efektleri bölümünde Cursor for osu! Trail'i etkinleştir.",
   "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin imleç izi efekti kullanılamıyor. Efekti kurulu KWin sürümün için derle.",
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "Kuruldu. KDE Plasma'da imleç izi efektini ayrıca derleyip etkinleştir.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Kaldırmadan önce bir Plasma Wayland oturumunda reset komutunu çalıştır."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Kaldırmadan önce bir Plasma Wayland oturumunda reset komutunu çalıştır.",
+  "Open Cursor for osu!": "Cursor for osu! uygulamasını aç",
+  "Quit Cursor for osu!": "Cursor for osu! uygulamasından çık"
 }

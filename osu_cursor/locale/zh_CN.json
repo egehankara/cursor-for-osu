@@ -136,5 +136,7 @@
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "请在 Plasma 桌面特效中启用 Cursor for osu! Trail。",
   "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin 光标轨迹特效不可用。请为已安装的 KWin 版本编译此特效。",
   "Installed. Build and enable the trail effect separately in KDE Plasma.": "安装完成。请在 KDE Plasma 中单独编译并启用光标轨迹特效。",
-  "Run reset from a Plasma Wayland session before uninstalling.": "卸载前请在 Plasma Wayland 会话中运行 reset。"
+  "Run reset from a Plasma Wayland session before uninstalling.": "卸载前请在 Plasma Wayland 会话中运行 reset。",
+  "Open Cursor for osu!": "打开 Cursor for osu!",
+  "Quit Cursor for osu!": "退出 Cursor for osu!"
 }

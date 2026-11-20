@@ -62,11 +62,11 @@ def test_language_comes_from_the_environment(monkeypatch):
 
 def test_shell_scripts_print_translated_messages():
     done = subprocess.run(
-        [sys.executable, "-m", "osu_cursor.i18n", "Unknown option: {option}", "option=--x"],
+        [sys.executable, "-X", "utf8", "-m", "osu_cursor.i18n", "Unknown option: {option}", "option=--x"],
         cwd=ROOT,
         env={"LANGUAGE": "tr", "PATH": "/usr/bin:/bin"},
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=True,
     )
     assert done.stdout == "Bilinmeyen seçenek: --x\n"

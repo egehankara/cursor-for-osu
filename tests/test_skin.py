@@ -593,7 +593,7 @@ def test_a_folder_that_vanishes_during_a_read_is_skipped(tmp_path, monkeypatch):
             raise FileNotFoundError(path)
         return real(path)
 
-    monkeypatch.setattr(gnome, "read_cursor_files", flaky)
+    monkeypatch.setattr(gnome.library, "read_cursor_files", flaky)
     assert [skin.name for skin in gnome.library_skins()] == ["b"]
 
 

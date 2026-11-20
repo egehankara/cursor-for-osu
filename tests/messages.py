@@ -13,7 +13,7 @@ SHELL_MESSAGE = re.compile(r'''\bsay\s+"((?:[^"\\]|\\.)*)"''')
 def python_messages() -> set[str]:
     found = set()
     for path in (ROOT / "osu_cursor").glob("*.py"):
-        for node in ast.walk(ast.parse(path.read_text(), str(path))):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"), str(path))):
             if (
                 isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Name)
@@ -29,7 +29,7 @@ def python_messages() -> set[str]:
 def shell_messages() -> set[str]:
     found = set()
     for path in ROOT.glob("*.sh"):
-        for match in SHELL_MESSAGE.finditer(path.read_text()):
+        for match in SHELL_MESSAGE.finditer(path.read_text(encoding="utf-8")):
             found.add(match.group(1).replace('\\"', '"'))
     return found
 
