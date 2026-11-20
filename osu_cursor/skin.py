@@ -52,6 +52,7 @@ class Skin:
     middle: Sprite | None
     trail: Sprite | None
     cursor_centre: bool
+    author: str = ""  # Author in skin.ini, shown under the name like osu!lazer does
 
     @property
     def disjoint_trail(self) -> bool:
@@ -201,6 +202,7 @@ def skin_from_files(files: dict[str, bytes], fallback_name: str) -> Skin:
         middle=_sprite(files, "cursormiddle"),
         trail=_visible(_sprite(files, "cursortrail")),
         cursor_centre=_flag(general, "CursorCentre"),
+        author=" ".join(general.get("author", "").split()),
     )
 
 

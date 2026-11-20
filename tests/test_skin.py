@@ -174,7 +174,8 @@ def library(tmp_path, monkeypatch):
 
 def test_library_lists_added_skins_by_name(tmp_path, monkeypatch):
     source = library(tmp_path, monkeypatch)
-    trail = {"cursor.png": png(), "cursortrail.png": png(), "skin.ini": b"[General]\nName: B   skin\n"}
+    trail = {"cursor.png": png(), "cursortrail.png": png(),
+             "skin.ini": b"[General]\nName: B   skin\nAuthor:  some   one // a comment\n"}
     gnome.add_skin(osk(source, trail, "b.osk"))
     gnome.add_skin(osk(source, {"cursor.png": png(colour=(0, 255, 0, 255))}, "a.osk"))
     (gnome.skins_dir() / "broken.osk").write_bytes(b"not a zip")
@@ -183,7 +184,10 @@ def test_library_lists_added_skins_by_name(tmp_path, monkeypatch):
 
     assert [skin.name for skin in skins] == ["a", "B skin"]
     assert [skin.has_trail for skin in skins] == [False, True]
-    assert Image.open(io.BytesIO(skins[0].preview_png)).size == (96, 48)
+    assert [skin.author for skin in skins] == ["", "some one"]
+    # Without a trail the picture is square, so the cursor sits in the middle of the card.
+    assert Image.open(io.BytesIO(skins[0].preview_png)).size == (112, 112)
+    assert Image.open(io.BytesIO(skins[1].preview_png)).size == (420, 112)
 
 
 def test_an_oversized_cursor_says_so(tmp_path):
@@ -381,6 +385,25 @@ def test_exports_are_added_once_as_cursor_files_only(tmp_path, monkeypatch):
     assert sorted(path.name for path in gnome.skins_dir().iterdir()) == ["a", "b"]
     assert original.read_bytes() == before
     assert [file.name for file in (gnome.skins_dir() / "a").iterdir()] == ["cursor.png"]
+
+
+def test_a_look_with_nothing_new_doesnt_read_the_library(tmp_path, monkeypatch):
+    library(tmp_path, monkeypatch)
+    exports = gnome.exports_dir()
+    exports.mkdir(parents=True)
+    osk(exports, {"cursor.png": png()}, "a.osk")
+    assert gnome.add_new_exports() == 1
+
+    reads = []
+    stored = gnome._stored_skins
+    monkeypatch.setattr(gnome, "_stored_skins", lambda: reads.append(1) or stored())
+    assert gnome.add_new_exports() == 0
+    assert reads == []  # every export was seen before
+
+    osk(exports, {"cursor.png": png(colour=(0, 255, 0, 255))}, "b.osk")
+    osk(exports, {"cursor.png": png()}, "a (1).osk")  # the same cursor as a
+    assert gnome.add_new_exports() == 1
+    assert reads == [1]  # read once for both new exports
 
 
 def test_add_exports_without_an_exports_folder(tmp_path, monkeypatch):
@@ -908,3 +931,60 @@ def test_osu_folder_can_be_chosen(tmp_path, monkeypatch):
     gnome.set_osu_dir(None)
     assert gnome.chosen_osu_dir() is None
     assert gnome.osu_dir() == default
+
+
+def test_adding_a_skin_twice_is_refused_by_its_cursor_files(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    first = osk(source, {"cursor.png": png()}, "first.osk")
+    again = osk(source, {"cursor.png": png()}, "same cursor, other name.osk")
+    gnome.add_skin(first)
+    assert gnome.skin_key(again) == gnome.skin_key(first) == gnome.library_skins()[0].key
+    with pytest.raises(SkinError, match="already in the list"):
+        gnome.add_skin(again)
+
+
+def test_applying_the_same_skin_again_keeps_its_theme(tmp_path, desktop):
+    skin = osk(tmp_path, {"cursor.png": png(40, 40)})
+    gnome.apply_skin(skin, 1.0)
+    theme = gnome.icons_dir() / desktop["cursor-theme"]
+    cursor = theme / "cursors" / "left_ptr"
+    written = cursor.stat().st_ino
+
+    gnome.apply_skin(skin, 1.0)
+    # Not written anew, the desktop may be reading the theme in use.
+    assert gnome.icons_dir() / desktop["cursor-theme"] == theme
+    assert cursor.stat().st_ino == written
+
+    desktop["cursor-size"] = "48"  # the files hold the system size, so they change with it
+    gnome.apply_skin(skin, 1.0)
+    assert gnome.icons_dir() / desktop["cursor-theme"] != theme
+
+
+def test_previews_are_drawn_once(tmp_path, monkeypatch):
+    source = library(tmp_path, monkeypatch)
+    gnome.add_skin(osk(source, {"cursor.png": png(), "cursortrail.png": png()}, "a.osk"))
+    gnome._previews.clear()
+    drawn = []
+    preview = render.preview
+    monkeypatch.setattr(render, "preview", lambda *args: drawn.append(1) or preview(*args))
+
+    first = gnome.library_skins()
+    second = gnome.library_skins()
+    assert len(drawn) == 1
+    assert first[0].preview_png == second[0].preview_png
+
+    gnome.remove_skin(first[0].path)
+    assert gnome.library_skins() == []
+    assert gnome._previews == {}  # removed skins are forgotten
+
+
+def test_going_back_with_a_broken_previous_file_uses_the_default(tmp_path, desktop, monkeypatch):
+    gnome.apply_skin(osk(tmp_path, {"cursor.png": png(40, 40)}), 1.0)
+    (gnome.data_dir() / "previous.json").write_text('{"size": 24}')  # the theme is missing
+    reset_to = []
+    monkeypatch.setattr(gnome, "_gsettings", lambda *args: reset_to.append(args) or "")
+
+    gnome.reset()
+
+    assert reset_to == [("reset", "org.gnome.desktop.interface", "cursor-theme")]
+    assert not (gnome.data_dir() / "previous.json").exists()

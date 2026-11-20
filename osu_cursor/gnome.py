@@ -32,8 +32,11 @@ EXTENSION_STATE_INACTIVE = 2
 EXTENSION_STATE_ERROR = 3
 EXTENSION_STATE_OUT_OF_DATE = 4
 EXTENSION_STATE_INITIALIZED = 6
-PREVIEW_WIDTH = 96
-PREVIEW_HEIGHT = 48
+# The skin cards show the cursor 56 pixels tall. The pictures are drawn at twice that,
+# so they stay sharp on a scaled screen. Without a trail the picture is square, which
+# puts the cursor in the middle of the card.
+PREVIEW_HEIGHT = 112
+PREVIEW_TRAIL_WIDTH = 420
 MIN_CURSOR_SIZE = 0.1  # same limits as the game's cursor size slider
 MAX_CURSOR_SIZE = 2.0
 MIN_SCREEN_SCALING = 0.2  # lower limit of the game's screen scaling sliders
@@ -69,6 +72,7 @@ class LibrarySkin:
     key: str  # same for skins whose cursor files are identical
     has_trail: bool
     preview_png: bytes
+    author: str = ""
 
 
 def data_dir() -> Path:
@@ -273,18 +277,19 @@ def _write_theme(
     Returns the theme name and the skin cursor's frame.
     """
     frames = render.build_frames(skin, scale)  # first, it refuses cursors that are too large
-    kde = plasma.selected()
-    prefix = plasma.THEME_PREFIX if kde else "osu-cursor-"
-    digest = _skin_id(skin, scale, system_theme)
-    if kde:
-        frame = frames[0]
-        digest = hashlib.sha256(
-            f"{digest}:{nominal_size}:{frame.image.size}:{frame.hot_x}:{frame.hot_y}:{skin.name}".encode()
-        ).hexdigest()[:12]
+    prefix = plasma.THEME_PREFIX if plasma.selected() else "osu-cursor-"
+    frame = frames[0]
+    # Everything that ends up in the theme, so the same name always means the same files.
+    digest = hashlib.sha256(
+        f"{_skin_id(skin, scale, system_theme)}:{nominal_size}:{frame.image.size}"
+        f":{frame.hot_x}:{frame.hot_y}:{skin.name}".encode()
+    ).hexdigest()[:12]
     name = prefix + digest
     theme = icons_dir() / name
-    if kde and (theme / THEME_MARKER).is_file():
-        return name, frames[0]
+    # Applying the skin in use again keeps its theme. Writing it anew would take the
+    # folder away for a moment while the desktop may be reading it.
+    if (theme / THEME_MARKER).is_file():
+        return name, frame
     temporary = icons_dir() / f".{name}.tmp"
     shutil.rmtree(temporary, ignore_errors=True)
     cursors = temporary / "cursors"
@@ -622,6 +627,25 @@ def _stored_skins() -> Iterator[tuple[Path, dict[str, bytes]]]:
             continue
 
 
+# Previews already drawn, by the skin's files. The list is read again after every
+# add, rename or remove, and drawing a trail is the slow part of reading it.
+_previews: dict[str, bytes] = {}
+_previews_lock = threading.Lock()  # the window can read the list from two jobs at once
+
+
+def _preview_png(skin: Skin, key: str) -> bytes:
+    with _previews_lock:
+        png = _previews.get(key)
+    if png is None:
+        image = io.BytesIO()
+        width = PREVIEW_TRAIL_WIDTH if skin.trail else PREVIEW_HEIGHT
+        render.preview(skin, width, PREVIEW_HEIGHT).save(image, "PNG")
+        png = image.getvalue()
+        with _previews_lock:
+            _previews[key] = png
+    return png
+
+
 def library_skins() -> list[LibrarySkin]:
     """The skins added in the app, sorted by name."""
     skins = []
@@ -630,18 +654,27 @@ def library_skins() -> list[LibrarySkin]:
             skin = skin_from_files(files, path.name)
         except SkinError:
             continue
-        image = io.BytesIO()
-        render.preview(skin, PREVIEW_WIDTH, PREVIEW_HEIGHT).save(image, "PNG")
+        key = _files_key(files)
         skins.append(
             LibrarySkin(
                 path,
                 _custom_name(path) or " ".join(skin.name.split()),
-                _files_key(files),
+                key,
                 skin.trail is not None,
-                image.getvalue(),
+                _preview_png(skin, key),
+                skin.author,
             )
         )
+    # Forget the previews of removed skins.
+    with _previews_lock:
+        for key in _previews.keys() - {skin.key for skin in skins}:
+            del _previews[key]
     return sorted(skins, key=lambda skin: skin.name.casefold())
+
+
+def skin_key(path: str | os.PathLike) -> str:
+    """What add_skin compares, the same for skins whose cursor files are identical."""
+    return _files_key(read_cursor_files(path))
 
 
 def add_skin(path: str | os.PathLike) -> None:
@@ -684,7 +717,9 @@ def add_new_exports(everything: bool = False) -> int:
     saved = sorted(name for name in saved if isinstance(name, str)) if isinstance(saved, list) else []
     seen = set(saved)
     present = set()
-    known = {_files_key(stored) for _path, stored in _stored_skins()}
+    # The library is read only once a new export turns up. Most looks find nothing new,
+    # and reading every stored skin each time grows with the size of the library.
+    known: set[str] | None = None
     added = 0
     # Shortest name first, so "skin.osk" wins over its repeat "skin (1).osk".
     for path in sorted(directory.iterdir(), key=lambda path: (len(path.name), path.name)):
@@ -708,6 +743,8 @@ def add_new_exports(everything: bool = False) -> int:
             continue  # one bad export should not stop the others
         seen.add(path.name)
         key = _files_key(files)
+        if known is None:
+            known = {_files_key(stored) for _path, stored in _stored_skins()}
         if key not in known:
             _store_skin(files, path.stem)
             known.add(key)
@@ -949,13 +986,17 @@ def _reset() -> str | None:
     restored = None
     try:
         previous = json.loads(previous_path.read_text())
-    except (OSError, ValueError):
-        previous = None
+        theme, size = previous["theme"], previous["size"]
+        if not (isinstance(theme, str) and theme and not THEME_PATTERN.match(theme)
+                and type(size) is int and size >= 0):
+            raise ValueError("not a cursor to go back to")
+    except (OSError, ValueError, KeyError, TypeError):
+        theme = size = None  # broken or missing, the default cursor is used instead
 
-    if previous:
-        _interface_set("cursor-theme", previous["theme"])
-        _interface_set("cursor-size", str(previous["size"]))
-        restored = previous["theme"]
+    if theme is not None:
+        _interface_set("cursor-theme", theme)
+        _interface_set("cursor-size", str(size))
+        restored = theme
     elif THEME_PATTERN.match(_interface_get("cursor-theme").strip("'")):
         _gsettings("reset", "org.gnome.desktop.interface", "cursor-theme")
         restored = _interface_get("cursor-theme").strip("'")
