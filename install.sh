@@ -65,6 +65,8 @@ mkdir -p "$app_dir" "$bin_dir" "$data_home/applications"
 cp -r "$source_dir/osu_cursor" "$app_dir/"
 rm -rf "$app_dir/osu_cursor/__pycache__"
 cp "$source_dir/uninstall.sh" "$data_home/osu-cursor/uninstall.sh"
+# The app shows "git pull" in this folder when a new version is out.
+printf '%s\n' "$source_dir" > "$data_home/osu-cursor/install-source"
 
 rm -f "$bin_dir/osu-cursor" "$data_home/applications/osu-cursor.desktop"  # the old name
 cat > "$bin_dir/cursor-for-osu" <<EOF

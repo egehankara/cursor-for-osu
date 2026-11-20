@@ -101,7 +101,7 @@ done
 
 if $keep_data; then
     rm -rf "$app_dir" "$data_dir/source" "$data_dir/plasma" "$data_dir/uninstall.sh"
-    rm -f "$data_dir/state.json" "$data_dir/previous.json" "$data_dir/extension-off.json" "$data_dir"/trail-*.rgba
+    rm -f "$data_dir/state.json" "$data_dir/previous.json" "$data_dir/extension-off.json" "$data_dir/install-source" "$data_dir"/trail-*.rgba
     echo "$removed_message"
     echo "$kept_message"
 else

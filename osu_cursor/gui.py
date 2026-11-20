@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 import sys
 import threading
 from collections.abc import Callable
@@ -13,18 +14,18 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from . import __version__, gnome  # noqa: E402
+from . import __version__, gnome, plasma, update  # noqa: E402
 from .i18n import _  # noqa: E402
 from .skin import SkinError  # noqa: E402
 
 APP_ID = "io.github.egehankara.CursorForOsu"
-REPOSITORY = "https://github.com/egehankara/cursor-for-osu"
 TOAST_MS = 3000
 # While the size slider is dragged. Each step makes GNOME reload the cursor in every app.
 SIZE_INTERVAL_MS = 100
 SKIN_LIST_MIN_HEIGHT = 150
 PAGE_MARGIN = 12
 SKIN_LIST_DEFAULT_HEIGHT = 420
+UPDATES_ON_LINK = "cursor-for-osu:updates-on"  # handled in the window, never opened
 BUSY_DIM_MS = 150  # quick jobs finish before anything on screen changes
 EXPORT_SETTLE_MS = 1000  # the game writes an export in several steps
 DROP_HINT = _("You can also drop .osk files and skin folders on the window.")
@@ -58,6 +59,15 @@ def _all_exports_message(added: int) -> str:
 
 def _exports_message(added: int) -> str:
     return _("New skins from osu!lazer: {added}").format(added=added)
+
+
+def _shell_path(path: Path) -> str:
+    """A path to type in a shell, with ~ for the home folder like the README shows."""
+    try:
+        inside_home = path.relative_to(Path.home())
+    except ValueError:
+        return shlex.quote(str(path))
+    return "~/" + shlex.quote(str(inside_home)) if str(inside_home) != "." else "~"
 
 
 def _hide_edit_icon(widget: Gtk.Widget) -> None:
@@ -100,6 +110,9 @@ class Window(Adw.ApplicationWindow):
 
         self._title = Adw.WindowTitle(title="Cursor for osu!")
         self._banner = Adw.Banner(use_markup=False)
+        self._update: update.Release | None = None
+        self._update_banner = Adw.Banner(use_markup=False, button_label=_("How to update"))
+        self._update_banner.connect("button-clicked", lambda _banner: self._show_update_dialog())
 
         # Only the skin list scrolls, everything above it stays in place.
         # The right margin is left to each part, so the list's scrollbar can sit in it
@@ -123,10 +136,11 @@ class Window(Adw.ApplicationWindow):
         content = Adw.ToolbarView(content=self._toasts)
         header = Adw.HeaderBar(title_widget=self._title)
         about_button = Gtk.Button(icon_name="help-about-symbolic", tooltip_text=_("About Cursor for osu!"))
-        about_button.connect("clicked", lambda _button: _about_dialog().present(self))
+        about_button.connect("clicked", lambda _button: self._show_about())
         header.pack_end(about_button)
         content.add_top_bar(header)
         content.add_top_bar(self._banner)
+        content.add_top_bar(self._update_banner)
         content.add_bottom_bar(self._build_reset())
         content.set_bottom_bar_style(Adw.ToolbarStyle.RAISED)
         self.set_content(content)
@@ -143,6 +157,7 @@ class Window(Adw.ApplicationWindow):
         self._load_skins()
         if self._watch_switch.get_active():
             self._watch_exports()
+        self._check_for_update()
 
     def _build_settings(self) -> Adw.PreferencesGroup:
         group = Adw.PreferencesGroup(title=_("Settings"))
@@ -300,6 +315,127 @@ class Window(Adw.ApplicationWindow):
         if self._watch_switch.get_active():
             self._stop_watching_exports()
             self._watch_exports()
+
+    def _check_for_update(self) -> None:
+        """Ask GitHub for the latest version without holding up the window."""
+        def work() -> None:
+            try:
+                release = update.available_update()
+            except Exception:  # a failed check is not worth bothering anyone with
+                release = None
+            GLib.idle_add(self._update_found, release)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _update_found(self, release: update.Release | None) -> bool:
+        self._update = release
+        self._refresh()
+        return GLib.SOURCE_REMOVE
+
+    def _show_update_dialog(self) -> None:
+        release = self._update
+        if release is None:
+            return
+        folder = update.source_dir()
+        commands = "\n".join((
+            f"cd {_shell_path(folder)}" if folder else "cd cursor-for-osu",
+            "git pull",
+            "bash install.sh",
+        ))
+        after = (
+            _("On KDE Plasma, also build the trail effect again, as in step 3 of the README.")
+            if plasma.selected()
+            else _("Then log out and back in once, so the new trail extension is loaded.")
+        )
+        dialog = Adw.AlertDialog(
+            heading=_("Version {version} is out").format(version=release.version),
+            body=_("You have {current}. Run these in a terminal:").format(current=__version__),
+        )
+
+        # Not selectable, it would open with everything selected. The button copies it.
+        label = Gtk.Label(
+            label=commands, xalign=0, hexpand=True,
+            margin_top=12, margin_bottom=12, margin_start=14,
+        )
+        label.add_css_class("monospace")
+        copy_button = Gtk.Button(
+            icon_name="edit-copy-symbolic", tooltip_text=_("Copy"),
+            valign=Gtk.Align.START, margin_top=6, margin_end=6,
+        )
+        copy_button.add_css_class("flat")
+        copy_button.connect("clicked", self._on_copy_commands, commands)
+        commands_box = Gtk.Box(spacing=6)
+        commands_box.add_css_class("card")
+        commands_box.append(label)
+        commands_box.append(copy_button)
+        after_label = Gtk.Label(label=after, wrap=True, xalign=0)
+        after_label.add_css_class("dimmed")
+        extra = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        extra.append(commands_box)
+        extra.append(after_label)
+        dialog.set_extra_child(extra)
+
+        dialog.add_response("notes", _("What's new"))
+        dialog.add_response("later", _("Not now"))
+        dialog.add_response("close", _("Close"))
+        dialog.set_default_response("close")
+        dialog.set_close_response("close")
+        dialog.connect("response", self._on_update_response, release.url)
+        dialog.present(self)
+
+    def _on_copy_commands(self, button: Gtk.Button, commands: str) -> None:
+        self.get_clipboard().set_content(Gdk.ContentProvider.new_for_value(commands))
+        button.set_icon_name("object-select-symbolic")  # shows it worked
+
+    def _on_update_response(self, _dialog, response: str, url: str) -> None:
+        if response == "notes":
+            Gtk.UriLauncher(uri=url).launch(self, None, None)
+        elif response == "later" and self._update is not None:
+            version = self._update.version
+            self._update = None
+            self._refresh()
+            self._ask_about_next_updates(version)
+
+    def _ask_about_next_updates(self, version: str) -> None:
+        """After "not now": skip only this version, or stop checking altogether."""
+        dialog = Adw.AlertDialog(heading=_("Let you know about the next versions?"))
+        dialog.add_response("never", _("No, don't ask again"))
+        dialog.add_response("yes", _("Yes, let me know"))
+        dialog.set_response_appearance("yes", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("yes")
+        dialog.set_close_response("yes")  # closing it only skips this version
+        dialog.connect("response", self._on_next_updates_response, version)
+        dialog.present(self)
+
+    def _on_next_updates_response(self, _dialog, response: str, version: str) -> None:
+        try:
+            if response == "never":
+                gnome.set_update_check_enabled(False)
+            else:
+                gnome.skip_update(version)
+        except OSError as failure:
+            self._toast(str(failure))
+
+    def _show_about(self) -> None:
+        dialog = _about_dialog()
+        if not gnome.update_check_enabled():
+            # The only way back for someone who said "don't ask again".
+            dialog.add_link(_("Turn update notifications back on"), UPDATES_ON_LINK)
+        dialog.connect("activate-link", self._on_about_link)
+        dialog.present(self)
+
+    def _on_about_link(self, dialog: Adw.AboutDialog, uri: str) -> bool:
+        if uri != UPDATES_ON_LINK:
+            return False  # a web link, opened as usual
+        try:
+            gnome.set_update_check_enabled(True)
+        except OSError as failure:
+            self._toast(str(failure))
+            return True
+        dialog.close()
+        self._toast(_("Update notifications are on again"))
+        self._check_for_update()
+        return True
 
     def _build_skins(self) -> Adw.PreferencesGroup:
         # The buttons get their own row so the description can use the full width.
@@ -596,6 +732,13 @@ class Window(Adw.ApplicationWindow):
         problem = gnome.desktop_notice() or gnome.trail_problem()
         self._banner.set_title(problem or "")
         self._banner.set_revealed(problem is not None)
+        # A problem comes first, the new version waits until it is solved.
+        update_shown = self._update is not None and problem is None
+        if update_shown:
+            self._update_banner.set_title(
+                _("Version {version} is out").format(version=self._update.version)
+            )
+        self._update_banner.set_revealed(update_shown)
 
         self._reset_button.set_sensitive(skin is not None and not self._busy)
         current = gnome.current_skin_key()
@@ -867,8 +1010,8 @@ def _about_dialog() -> Adw.AboutDialog:
         comments=_("Use the cursor and cursor trail of your osu! skins on GNOME or KDE Plasma, outside the game.")
         + "\n\n"
         + _("Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!."),
-        website=REPOSITORY,
-        issue_url=f"{REPOSITORY}/issues",
+        website=update.REPOSITORY,
+        issue_url=f"{update.REPOSITORY}/issues",
         license_type=Gtk.License.MIT_X11,
         copyright="© 2026 Egehan Kara",
     )

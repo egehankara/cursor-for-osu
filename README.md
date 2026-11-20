@@ -111,7 +111,12 @@ and builds with KWin 6.6 up to 6.8.
 
 ### Updating
 
-Open a terminal and run:
+The app asks GitHub once a day whether a new version is out. If one is, a bar at the top of the
+window says so, and **How to update** shows the commands below with your folder filled in. If you
+pick **Not now**, it asks whether to tell you about later versions. Answer **No** and it stops
+checking; the About window can turn it back on.
+
+To update, open a terminal and run:
 
 ```sh
 cd cursor-for-osu
@@ -296,7 +301,12 @@ Trail kapalıyken de imleç çalışır. Trail CachyOS'ta Plasma 6 ile test edil
 
 ### Güncelleme
 
-Bir terminal aç ve şunu çalıştır:
+Uygulama yeni sürüm çıkıp çıkmadığını günde bir kez GitHub'a sorar. Çıktıysa pencerenin üstünde
+bir şerit belirir, **Nasıl güncellenir?** düğmesi de aşağıdaki komutları senin klasörünle birlikte
+gösterir. **Şimdi değil** dersen sonraki sürümlerde haber verip vermeyeceğini sorar. **Hayır**
+dersen kontrolü bırakır, Hakkında penceresinden tekrar açabilirsin.
+
+Güncellemek için bir terminal aç ve şunu çalıştır:
 
 ```sh
 cd cursor-for-osu

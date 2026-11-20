@@ -503,6 +503,38 @@ def set_watch_exports_enabled(enabled: bool) -> None:
     _save_setting("watch_exports", enabled)
 
 
+def update_check_enabled() -> bool:
+    return _settings().get("check_updates") is not False
+
+
+def set_update_check_enabled(enabled: bool) -> None:
+    _save_setting("check_updates", enabled)
+
+
+def skipped_update() -> str | None:
+    """The version the user said "not now" to, it isn't offered again."""
+    skipped = _settings().get("skipped_update")
+    return skipped if isinstance(skipped, str) else None
+
+
+def skip_update(version: str) -> None:
+    _save_setting("skipped_update", version)
+
+
+def cached_release() -> dict | None:
+    """The latest release seen on GitHub and when it was asked, see update.py."""
+    cached = _settings().get("latest_release")
+    if (isinstance(cached, dict) and isinstance(cached.get("version"), str)
+            and isinstance(cached.get("url"), str)
+            and isinstance(cached.get("checked_at"), (int, float))):
+        return cached
+    return None
+
+
+def cache_release(version: str, url: str, checked_at: float) -> None:
+    _save_setting("latest_release", {"version": version, "url": url, "checked_at": checked_at})
+
+
 def keep_system_cursors() -> bool:
     return _settings().get("keep_system_cursors") is True
 
