@@ -70,7 +70,7 @@ Plasma's window manager, that the commands in step 3 build on your computer.
 
    ```sh
    # Arch, CachyOS, Manjaro
-   sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
+   sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel vulkan-headers
    ```
 
    ```sh
@@ -260,7 +260,7 @@ yöneticisi KWin için küçük bir eklentidir ve 3. adımdaki komutlar onu seni
 
    ```sh
    # Arch, CachyOS, Manjaro
-   sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel
+   sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel vulkan-headers
    ```
 
    ```sh
