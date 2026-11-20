@@ -988,3 +988,24 @@ def test_going_back_with_a_broken_previous_file_uses_the_default(tmp_path, deskt
 
     assert reset_to == [("reset", "org.gnome.desktop.interface", "cursor-theme")]
     assert not (gnome.data_dir() / "previous.json").exists()
+
+
+def test_installing_clears_a_turned_off_extension_but_applying_doesnt(monkeypatch):
+    settings = {
+        "enabled-extensions": "@as []",
+        "disabled-extensions": f"['other@example.com', '{gnome.EXTENSION_UUID}']",
+    }
+
+    def fake(*args):
+        if args[0] == "get":
+            return settings[args[2]]
+        settings[args[2]] = args[3]
+        return ""
+
+    monkeypatch.setattr(gnome, "_gsettings", fake)
+    gnome.enable_extension()  # applying a skin: turning it off by hand is respected
+    assert gnome.EXTENSION_UUID in settings["disabled-extensions"]
+
+    gnome.enable_extension(even_if_turned_off=True)  # what install.sh does
+    assert settings["disabled-extensions"] == "['other@example.com']"
+    assert settings["enabled-extensions"] == f"['{gnome.EXTENSION_UUID}']"

@@ -22,6 +22,7 @@
   "Couldn't read the osu!lazer exports: {error}": "osu!lazer のエクスポートを読み込めませんでした: {error}",
   "Couldn't read the skins: {error}": "スキンを読み込めませんでした: {error}",
   "Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.": "Cursor for osu! はファンが作ったツールです。ppy や osu! が作ったものではなく、関係もありません。",
+  "Cursor for osu! was open and has been closed. Open it again to use the new version.": "Cursor for osu! が開いていたので閉じました。新しいバージョンを使うにはもう一度開いてください。",
   "Cursor for osu! was removed.": "Cursor for osu! を削除しました。",
   "Cursor size": "カーソルサイズ",
   "cursor size from 0.1 to 2.0 (default: the last one set, or your osu!lazer setting)": "カーソルサイズ 0.1〜2.0（既定: 最後に設定した値、または osu!lazer の設定）",

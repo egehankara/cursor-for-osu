@@ -22,6 +22,7 @@
   "Couldn't read the osu!lazer exports: {error}": "osu!lazer export'ları okunamadı: {error}",
   "Couldn't read the skins: {error}": "Skin'ler okunamadı: {error}",
   "Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.": "Cursor for osu! hayran yapımı bir araçtır. ppy veya osu! tarafından yapılmamıştır ve onlarla bir bağlantısı yoktur.",
+  "Cursor for osu! was open and has been closed. Open it again to use the new version.": "Cursor for osu! açıktı ve kapatıldı. Yeni sürümü kullanmak için tekrar aç.",
   "Cursor for osu! was removed.": "Cursor for osu! kaldırıldı.",
   "Cursor size": "İmleç boyutu",
   "cursor size from 0.1 to 2.0 (default: the last one set, or your osu!lazer setting)": "imleç boyutu, 0.1 ile 2.0 arası (varsayılan: son ayar veya osu!lazer ayarın)",

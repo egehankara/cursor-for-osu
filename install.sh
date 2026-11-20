@@ -60,6 +60,12 @@ if [ "${adw_version#1.}" -lt 5 ] 2>/dev/null; then
     exit 1
 fi
 
+# An open window keeps running the old code, and opening the app again would only bring
+# that window back. It is closed, the skins and settings are already saved.
+if pkill -x -f 'python3 -m osu_cursor' 2>/dev/null; then
+    app_was_open=true
+fi
+
 rm -rf "$app_dir"
 mkdir -p "$app_dir" "$bin_dir" "$data_home/applications"
 cp -r "$source_dir/osu_cursor" "$app_dir/"
@@ -89,6 +95,9 @@ done
 
 if PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.plasma import selected; raise SystemExit(not selected())'; then
     say "Installed. Build and enable the trail effect separately in KDE Plasma."
+    if [ "${app_was_open:-}" = true ]; then
+        say "Cursor for osu! was open and has been closed. Open it again to use the new version."
+    fi
     exit 0
 fi
 
@@ -107,12 +116,16 @@ with open(path, "w") as file:
 EOF
 
 # GNOME only discovers new extensions at login, so turn it on for the next one.
-PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.gnome import enable_extension; enable_extension()' 2>/dev/null ||
+# An earlier uninstall left it on GNOME's list of turned-off extensions, that is cleared too.
+PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.gnome import enable_extension; enable_extension(even_if_turned_off=True)' 2>/dev/null ||
     extension_off=true
 
 say "Installed. Log out and back in once so the trail extension is loaded."
 if [ "${extension_off:-}" = true ]; then
     say "The trail extension is turned off. Turn it on in the Extensions app."
+fi
+if [ "${app_was_open:-}" = true ]; then
+    say "Cursor for osu! was open and has been closed. Open it again to use the new version."
 fi
 
 # The extension says which GNOME Shell versions it was made for.

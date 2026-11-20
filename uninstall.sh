@@ -52,6 +52,9 @@ done
 removed_message="$(say "Cursor for osu! was removed.")"
 kept_message="$(say "The skin list and settings were kept in {folder}." folder="$data_dir")"
 
+# An open window would go on watching exports and could write the files back.
+pkill -x -f 'python3 -m osu_cursor' 2>/dev/null || true
+
 # Put the previous cursor back while the app is still here.
 if PYTHONPATH="$code_dir" python3 -c 'from osu_cursor.plasma import selected; raise SystemExit(not selected())' 2>/dev/null; then
     PYTHONPATH="$code_dir" python3 -m osu_cursor reset
@@ -73,16 +76,19 @@ fi
 # Taking it out of the enabled list makes GNOME Shell stop it right away.
 gnome-extensions disable "$uuid" >/dev/null 2>&1 || true
 gnome-extensions disable "$old_uuid" >/dev/null 2>&1 || true
+# Disabling also puts it on the list of turned-off extensions, which would keep it off
+# after a later install. The extension is gone, so it leaves both lists.
 python3 - "$uuid" "$old_uuid" <<'EOF' 2>/dev/null || true
 import ast, subprocess, sys
 
 uuids = sys.argv[1:]
-key = ["org.gnome.shell", "enabled-extensions"]
-current = subprocess.run(["gsettings", "get", *key], check=True, capture_output=True, text=True).stdout
-enabled = ast.literal_eval(current.strip().removeprefix("@as "))
-remaining = [uuid for uuid in enabled if uuid not in uuids]
-if remaining != enabled:
-    subprocess.run(["gsettings", "set", *key, str(remaining)], check=True)
+for name in ("enabled-extensions", "disabled-extensions"):
+    key = ["org.gnome.shell", name]
+    current = subprocess.run(["gsettings", "get", *key], check=True, capture_output=True, text=True).stdout
+    listed = ast.literal_eval(current.strip().removeprefix("@as "))
+    remaining = [uuid for uuid in listed if uuid not in uuids]
+    if remaining != listed:
+        subprocess.run(["gsettings", "set", *key, str(remaining)], check=True)
 EOF
 
 rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"

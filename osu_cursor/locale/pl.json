@@ -22,6 +22,7 @@
   "Couldn't read the osu!lazer exports: {error}": "Nie udało się odczytać eksportów osu!lazer: {error}",
   "Couldn't read the skins: {error}": "Nie udało się odczytać skórek: {error}",
   "Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.": "Cursor for osu! to narzędzie stworzone przez fanów. Nie jest tworzone przez ppy ani osu! i nie jest z nimi powiązane.",
+  "Cursor for osu! was open and has been closed. Open it again to use the new version.": "Cursor for osu! był otwarty i został zamknięty. Otwórz go ponownie, aby używać nowej wersji.",
   "Cursor for osu! was removed.": "Usunięto Cursor for osu!.",
   "Cursor size": "Rozmiar kursora",
   "cursor size from 0.1 to 2.0 (default: the last one set, or your osu!lazer setting)": "rozmiar kursora od 0.1 do 2.0 (domyślnie: ostatnio ustawiony lub ustawienie z osu!lazer)",

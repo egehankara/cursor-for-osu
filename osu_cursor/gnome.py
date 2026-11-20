@@ -420,11 +420,23 @@ def _clear_trail_state() -> None:
             entry.unlink()
 
 
-def enable_extension() -> None:
-    """Turn the extension on, including for the next login if it isn't loaded yet."""
-    enabled = ast.literal_eval(
-        _gsettings("get", "org.gnome.shell", "enabled-extensions").removeprefix("@as ")
-    )
+def _extension_list(key: str) -> list[str]:
+    return ast.literal_eval(_gsettings("get", "org.gnome.shell", key).removeprefix("@as "))
+
+
+def enable_extension(even_if_turned_off: bool = False) -> None:
+    """Turn the extension on, including for the next login if it isn't loaded yet.
+
+    GNOME also keeps a list of extensions turned off by hand, which wins over the list
+    of enabled ones. Applying a skin leaves that choice alone, the window says the
+    extension is off instead. Installing clears it, since an earlier uninstall put it there.
+    """
+    if even_if_turned_off:
+        disabled = _extension_list("disabled-extensions")
+        if EXTENSION_UUID in disabled:
+            kept = [uuid for uuid in disabled if uuid != EXTENSION_UUID]
+            _gsettings("set", "org.gnome.shell", "disabled-extensions", str(kept))
+    enabled = _extension_list("enabled-extensions")
     wanted = [uuid for uuid in enabled if uuid not in OLD_EXTENSION_UUIDS]
     if EXTENSION_UUID not in wanted:
         wanted.append(EXTENSION_UUID)

@@ -22,6 +22,7 @@
   "Couldn't read the osu!lazer exports: {error}": "无法读取 osu!lazer 的导出：{error}",
   "Couldn't read the skins: {error}": "无法读取皮肤：{error}",
   "Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.": "Cursor for osu! 是一款粉丝自制工具，并非由 ppy 或 osu! 制作，也与其无关。",
+  "Cursor for osu! was open and has been closed. Open it again to use the new version.": "Cursor for osu! 原本已打开，现已关闭。请重新打开以使用新版本。",
   "Cursor for osu! was removed.": "已移除 Cursor for osu!。",
   "Cursor size": "光标大小",
   "cursor size from 0.1 to 2.0 (default: the last one set, or your osu!lazer setting)": "光标大小，0.1 到 2.0（默认：上次设置的值或 osu!lazer 中的设置）",

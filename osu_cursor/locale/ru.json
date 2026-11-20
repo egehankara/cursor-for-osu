@@ -22,6 +22,7 @@
   "Couldn't read the osu!lazer exports: {error}": "Не удалось прочитать экспорты osu!lazer: {error}",
   "Couldn't read the skins: {error}": "Не удалось прочитать скины: {error}",
   "Cursor for osu! is a fan-made tool. It is not made by or affiliated with ppy or osu!.": "Cursor for osu! — фанатский инструмент. Он не создан ppy или osu! и не связан с ними.",
+  "Cursor for osu! was open and has been closed. Open it again to use the new version.": "Cursor for osu! был открыт и закрыт. Откройте его снова, чтобы использовать новую версию.",
   "Cursor for osu! was removed.": "Cursor for osu! удалён.",
   "Cursor size": "Размер курсора",
   "cursor size from 0.1 to 2.0 (default: the last one set, or your osu!lazer setting)": "размер курсора от 0.1 до 2.0 (по умолчанию: последний заданный или настройка osu!lazer)",
