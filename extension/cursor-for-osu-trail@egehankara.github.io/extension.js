@@ -460,13 +460,77 @@ class Trail {
     }
 }
 
+// Turning the extension off puts the previous cursor back, turning it on again
+// brings the skin back. The app keeps the previous cursor in previous.json.
+const THEME_PATTERN = /^osu-cursor-[0-9a-f]{12}$/;
+
+class CursorSwitch {
+    constructor(dataDir) {
+        this._previousPath = GLib.build_filenamev([dataDir, 'previous.json']);
+        this._offPath = GLib.build_filenamev([dataDir, 'extension-off.json']);
+        this._settings = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
+    }
+
+    _read(path) {
+        try {
+            const [, bytes] = GLib.file_get_contents(path);
+            return JSON.parse(new TextDecoder().decode(bytes));
+        } catch (error) {
+            if (!error.matches?.(GLib.FileError, GLib.FileError.NOENT))
+                console.error(`osu-cursor: could not read ${path}: ${error}`);
+            return null;
+        }
+    }
+
+    // Brings the skin cursor back if turning the extension off took it away
+    // and nothing else changed the cursor since.
+    restore() {
+        const off = this._read(this._offPath);
+        if (!off)
+            return;
+        GLib.unlink(this._offPath);
+        if (typeof off.theme !== 'string' || !THEME_PATTERN.test(off.theme))
+            return;
+        const themeDir = GLib.build_filenamev([GLib.get_user_data_dir(), 'icons', off.theme]);
+        if (this._settings.get_string('cursor-theme') === off.previous &&
+            GLib.file_test(themeDir, GLib.FileTest.IS_DIR))
+            this._settings.set_string('cursor-theme', off.theme);
+    }
+
+    // Puts the cursor from before the first skin back and remembers the skin cursor.
+    takeOff() {
+        const current = this._settings.get_string('cursor-theme');
+        const previous = this._read(this._previousPath);
+        if (!THEME_PATTERN.test(current) || typeof previous?.theme !== 'string')
+            return;
+        GLib.file_set_contents(this._offPath, JSON.stringify({theme: current, previous: previous.theme}));
+        this._settings.set_string('cursor-theme', previous.theme);
+    }
+}
+
 export default class OsuCursorTrailExtension extends Extension {
     enable() {
-        this._trail = new Trail(GLib.build_filenamev([GLib.get_user_data_dir(), 'osu-cursor']));
+        const dataDir = GLib.build_filenamev([GLib.get_user_data_dir(), 'osu-cursor']);
+        this._cursor = new CursorSwitch(dataDir);
+        try {
+            this._cursor.restore();
+        } catch (error) {
+            console.error(`osu-cursor: could not bring the skin cursor back: ${error}`);
+        }
+        this._trail = new Trail(dataDir);
     }
 
     disable() {
         this._trail.destroy();
         this._trail = null;
+        // The lock screen turns extensions off too, the skin cursor stays for it.
+        if (!Main.sessionMode.isLocked) {
+            try {
+                this._cursor.takeOff();
+            } catch (error) {
+                console.error(`osu-cursor: could not put the previous cursor back: ${error}`);
+            }
+        }
+        this._cursor = null;
     }
 }

@@ -892,6 +892,7 @@ def _reset() -> str | None:
     _remove_old_themes(keep=None)
     shutil.rmtree(_source_dir(), ignore_errors=True)
     previous_path.unlink(missing_ok=True)
+    (data_dir() / "extension-off.json").unlink(missing_ok=True)
     return restored
 
 
