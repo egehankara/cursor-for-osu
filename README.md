@@ -124,8 +124,8 @@ git pull
 bash install.sh
 ```
 
-On KDE Plasma, also run the three commands of step 3 again, and run them again after every
-Plasma update.
+On KDE Plasma, also run the three commands of step 3 again and log out and back in once. Run
+them again after every Plasma update too.
 
 ### Uninstalling
 
@@ -141,6 +141,7 @@ On Plasma, run the uninstall command from the Plasma Wayland session. To remove 
 installed module, disable **Cursor for osu! Trail** in Desktop Effects and remove the module.
 
 ```sh
+# Kubuntu:
 sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
 # Arch, CachyOS, Manjaro:
 sudo rm -- "$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
@@ -314,7 +315,7 @@ git pull
 bash install.sh
 ```
 
-KDE Plasma'da 3. adımdaki üç komutu da tekrar çalıştır, her Plasma güncellemesinden sonra da yeniden çalıştır.
+KDE Plasma'da 3. adımdaki üç komutu da tekrar çalıştır ve bir kez oturumu kapatıp aç. Her Plasma güncellemesinden sonra da bu komutları yeniden çalıştır.
 
 ### Kaldırma
 
@@ -330,6 +331,7 @@ Plasma'da kaldırma komutunu Plasma Wayland oturumunda çalıştır. Ayrı kurul
 kaldırmak için Masaüstü Efektleri'nden **osu! İmleç İzi** efektini kapat ve modülü sil.
 
 ```sh
+# Kubuntu:
 sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
 # Arch, CachyOS, Manjaro:
 sudo rm -- "$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"

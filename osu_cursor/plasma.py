@@ -6,6 +6,8 @@ import json
 import math
 import os
 import re
+import shlex
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -119,6 +121,22 @@ def screen_size() -> tuple[int, int]:
     # shortcut: use the existing default when KScreen is unavailable, surface a
     # display selection if users need a different fallback.
     return 1920, 1080
+
+
+def qt_plugin_dir_argument() -> str:
+    """Where KWin effects go, for the cmake command shown to the user.
+
+    Asked of qtpaths6 now, so the command is the same on every distribution. If that
+    fails, the README's command is shown, which asks it when the user runs it.
+    """
+    qtpaths = shutil.which("qtpaths6") or "/usr/lib/qt6/bin/qtpaths6"
+    try:
+        folder = _run(qtpaths, "--query", "QT_INSTALL_PLUGINS").stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        folder = ""
+    if folder and Path(folder).is_dir():
+        return shlex.quote(folder)
+    return f'"$({qtpaths} --query QT_INSTALL_PLUGINS)"'
 
 
 def effect_status() -> str:

@@ -12,7 +12,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from . import __version__, gnome, plasma, update  # noqa: E402
 from .i18n import _  # noqa: E402
@@ -25,6 +25,7 @@ SIZE_INTERVAL_MS = 100
 SKIN_LIST_MIN_HEIGHT = 150
 PAGE_MARGIN = 12
 SKIN_LIST_DEFAULT_HEIGHT = 420
+COMMANDS_MAX_CHARS = 52  # the update commands, so the dialog fits the window
 UPDATES_ON_LINK = "cursor-for-osu:updates-on"  # handled in the window, never opened
 BUSY_DIM_MS = 150  # quick jobs finish before anything on screen changes
 EXPORT_SETTLE_MS = 1000  # the game writes an export in several steps
@@ -270,6 +271,8 @@ class Window(Adw.ApplicationWindow):
             str(folder).replace(home, "~", 1) if found
             else _("Not found. Choose it if osu!lazer keeps its files somewhere else.")
         )
+        # A long path is cut short, the explanation is shown whole.
+        self._osu_row.set_subtitle_lines(1 if found else 0)
         self._osu_auto_button.set_visible(gnome.chosen_osu_dir() is not None)
 
         self._game_row.set_visible(gnome.has_game_cursor_size())
@@ -337,26 +340,42 @@ class Window(Adw.ApplicationWindow):
         if release is None:
             return
         folder = update.source_dir()
-        commands = "\n".join((
+        lines = [
             f"cd {_shell_path(folder)}" if folder else "cd cursor-for-osu",
             "git pull",
             "bash install.sh",
-        ))
-        after = (
-            _("On KDE Plasma, also build the trail effect again, as in step 3 of the README.")
-            if plasma.selected()
-            else _("Then log out and back in once, so the new trail extension is loaded.")
-        )
+        ]
+        if plasma.selected():
+            # The KWin effect is built on the computer, like in step 3 of the README.
+            lines += [
+                "cmake -S kwin -B build \\",
+                f"    -DKDE_INSTALL_PLUGINDIR={plasma.qt_plugin_dir_argument()}",
+                "cmake --build build",
+                "sudo cmake --install build",
+            ]
+            after = _("Then log out and back in once, so the new trail effect is loaded.")
+        else:
+            after = _("Then log out and back in once, so the new trail extension is loaded.")
+        commands = "\n".join(lines)
         dialog = Adw.AlertDialog(
             heading=_("Version {version} is out").format(version=release.version),
             body=_("You have {current}. Run these in a terminal:").format(current=__version__),
         )
+        if hasattr(dialog.props, "prefer_wide_layout"):  # libadwaita 1.6 and newer
+            dialog.set_prefer_wide_layout(True)
 
         # Not selectable, it would open with everything selected. The button copies it.
+        # As wide as the longest command, up to a limit. Only a very long folder wraps,
+        # and without hyphens, which would read as part of the command.
+        width = min(max(len(line) for line in lines), COMMANDS_MAX_CHARS)
         label = Gtk.Label(
-            label=commands, xalign=0, hexpand=True,
+            label=commands, xalign=0, hexpand=True, wrap=True, wrap_mode=Pango.WrapMode.CHAR,
+            width_chars=width, max_width_chars=width,
             margin_top=12, margin_bottom=12, margin_start=14,
         )
+        no_hyphens = Pango.AttrList()
+        no_hyphens.insert(Pango.attr_insert_hyphens_new(False))
+        label.set_attributes(no_hyphens)
         label.add_css_class("monospace")
         copy_button = Gtk.Button(
             icon_name="edit-copy-symbolic", tooltip_text=_("Copy"),
