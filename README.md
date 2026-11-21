@@ -1,8 +1,5 @@
 <div align="center">
 
-<img src="data/screenshots/trail.gif" width="180" align="right" alt="Screen recording on GNOME: an osu! skin cursor with its yellow trail">
-<img src="data/screenshots/spacer.png" width="180" align="left" alt="">
-
 <img src="data/icons/hicolor/scalable/apps/io.github.egehankara.CursorForOsu.svg" width="112" alt="Cursor for osu! icon">
 
 # Cursor for osu!
