@@ -94,6 +94,7 @@ public:
     {
         const QRectF previous = m_bounds;
         if (m_config && isActive()) {
+            checkMagnified();
             advanceClock();
             const qreal now = time();
             const QPointF pointer = m_mouse->pos();
@@ -470,8 +471,29 @@ private:
         });
     }
 
+    // Plasma's shake cursor effect draws a larger cursor into the scene while the
+    // pointer is shaken, and the trail would be drawn over it. So that cursor counts
+    // as another shape: the trail fades out and comes back once it is small again.
+    static bool magnified()
+    {
+        return effects->isEffectActive(QStringLiteral("shakecursor"));
+    }
+
+    // The shake effect gives no signal when it starts, so this is looked at as the
+    // pointer moves and on each frame. It ends by showing the cursor again, which
+    // already comes back through hiddenChanged.
+    void checkMagnified()
+    {
+        if (magnified() != m_magnified) {
+            cursorChanged();
+        }
+    }
+
     bool matchesSkin() const
     {
+        if (m_magnified) {
+            return false;
+        }
         if (m_config->cursorSize.isEmpty()) {
             return true;
         }
@@ -487,6 +509,7 @@ private:
 
     void cursorChanged()
     {
+        m_magnified = magnified();
         if (m_ownCursor) {
             loadCursorImage();
             effects->addRepaint(damage(m_cursorRect));
@@ -505,6 +528,7 @@ private:
 
     void pointerMoved(QPointF pos)
     {
+        checkMagnified();
         updateOwnCursor();
         if (m_ownCursor) {
             effects->addRepaint(damage(m_cursorRect));
@@ -537,6 +561,7 @@ private:
     std::optional<QPointF> m_pending;
     QRectF m_bounds;
     bool m_ownCursor = false;
+    bool m_magnified = false;
     QImage m_cursorImage;
     QPointF m_cursorHotspot;
     std::unique_ptr<GLTexture> m_cursorTexture;
