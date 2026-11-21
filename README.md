@@ -1,12 +1,14 @@
 <div align="center">
 
 <img src="data/icons/hicolor/scalable/apps/io.github.egehankara.CursorForOsu.svg" width="112" alt="Cursor for osu! icon">
+&nbsp;&nbsp;
+<img src="data/screenshots/trail.gif" width="112" alt="An osu! skin cursor with its yellow trail moving over a dark background">
+<br>
+<sub>Screen recording on GNOME</sub>
 
 # Cursor for osu!
 
 **Your osu! skin's cursor and cursor trail, on your whole Linux desktop.**
-
-<img src="data/screenshots/trail.gif" width="600" alt="An osu! skin cursor with its yellow trail moving over a dark background">
 
 GNOME and KDE Plasma · Wayland · 10 languages
 
