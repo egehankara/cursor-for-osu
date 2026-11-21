@@ -38,6 +38,7 @@
   "How to update": "如何更新",
   "In-game size": "游戏内大小",
   "Installed. Log out and back in once so the trail extension is loaded.": "安装完成。请注销并重新登录一次以加载拖尾扩展。",
+  "Installed. The trail extension is already running, no need to log out.": "安装完成。拖尾扩展已在运行，无需注销。",
   "KDE Plasma support": "KDE Plasma 支持",
   "Keep system cursors": "保留系统光标",
   "keep the skin list and settings": "保留皮肤列表和设置",

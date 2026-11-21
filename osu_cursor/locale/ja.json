@@ -38,6 +38,7 @@
   "How to update": "更新方法",
   "In-game size": "ゲーム内のサイズ",
   "Installed. Log out and back in once so the trail extension is loaded.": "インストールしました。トレイル拡張機能を読み込むため、一度ログアウトしてから再ログインしてください。",
+  "Installed. The trail extension is already running, no need to log out.": "インストールしました。トレイル拡張機能はすでに動作しているので、ログアウトは不要です。",
   "KDE Plasma support": "KDE Plasma 対応",
   "Keep system cursors": "システムカーソルを残す",
   "keep the skin list and settings": "スキンリストと設定を残す",

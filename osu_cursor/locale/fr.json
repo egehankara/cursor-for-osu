@@ -38,6 +38,7 @@
   "How to update": "Comment mettre à jour",
   "In-game size": "Taille en jeu",
   "Installed. Log out and back in once so the trail extension is loaded.": "Installé. Fermez la session et rouvrez-la une fois pour charger l'extension de la traînée.",
+  "Installed. The trail extension is already running, no need to log out.": "Installé. L'extension de la traînée fonctionne déjà, inutile de fermer la session.",
   "KDE Plasma support": "Prise en charge de KDE Plasma",
   "Keep system cursors": "Garder les curseurs du système",
   "keep the skin list and settings": "garder la liste des skins et les paramètres",

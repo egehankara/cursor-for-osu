@@ -101,26 +101,37 @@ if PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.plasma import selected; rai
     exit 0
 fi
 
+# GNOME Shell keeps running the extension code it loaded at login. When that code is the
+# same as the new one, an update needs no logging out. The metadata is left out of the
+# comparison, earlier versions wrote the app's version into it.
+if [ -d "$extension_dir" ] &&
+    diff -rq -x metadata.json "$source_dir/extension/$uuid" "$extension_dir" >/dev/null 2>&1; then
+    extension_unchanged=true
+fi
+
 rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
 mkdir -p "$extension_dir"
 cp "$source_dir/extension/$uuid/"* "$extension_dir/"
-# The Extensions app shows the version, it is the app's version.
-python3 - "$extension_dir/metadata.json" "$source_dir/osu_cursor/__init__.py" <<'EOF'
-import json, re, sys
-path, init = sys.argv[1:]
-metadata = json.load(open(path))
-metadata["version-name"] = re.search(r'__version__ = "(.+?)"', open(init).read()).group(1)
-with open(path, "w") as file:
-    json.dump(metadata, file, indent=2, ensure_ascii=False)
-    file.write("\n")
-EOF
 
 # GNOME only discovers new extensions at login, so turn it on for the next one.
 # An earlier uninstall left it on GNOME's list of turned-off extensions, that is cleared too.
 PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.gnome import enable_extension; enable_extension(even_if_turned_off=True)' 2>/dev/null ||
     extension_off=true
 
-say "Installed. Log out and back in once so the trail extension is loaded."
+# Turning it on takes a moment, so GNOME Shell is asked a few times.
+if [ "${extension_unchanged:-}" = true ] && [ "${extension_off:-}" != true ] &&
+    PYTHONPATH="$app_dir" python3 -c '
+import time
+from osu_cursor.gnome import extension_active
+for _ in range(20):
+    if extension_active():
+        raise SystemExit(0)
+    time.sleep(0.1)
+raise SystemExit(1)' 2>/dev/null; then
+    say "Installed. The trail extension is already running, no need to log out."
+else
+    say "Installed. Log out and back in once so the trail extension is loaded."
+fi
 if [ "${extension_off:-}" = true ]; then
     say "The trail extension is turned off. Turn it on in the Extensions app."
 fi

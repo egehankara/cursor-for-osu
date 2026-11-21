@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 
-from . import gnome
+from . import __version__, gnome
 from .i18n import _
 from .skin import SkinError
 
@@ -29,6 +29,7 @@ def _uninstall(keep_data: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="cursor-for-osu")
+    parser.add_argument("--version", action="version", version=f"Cursor for osu! {__version__}")
     # effect-off and effect-on are run by the KWin effect, not by people, so they aren't listed.
     commands = parser.add_subparsers(dest="command", metavar="{apply,size,reset,status,uninstall}")
     apply_parser = commands.add_parser("apply", help=_("apply a skin"))
