@@ -45,32 +45,34 @@ The install takes a few commands in a terminal. Open it from your applications: 
 
 The trail is made for **GNOME Shell 51**. The cursor works on any GNOME.
 
-**1. Install the packages.** Pick your distribution:
+**1. Install the packages.** Find your distribution below.
+
+> [!WARNING]
+> **Run only the command for your distribution, not all of them.**
+
+**Arch, CachyOS, Manjaro**
 
 ```sh
-# Arch, CachyOS, Manjaro
 sudo pacman -S --needed git python python-pillow python-gobject libadwaita
 ```
 
-<details>
-<summary>Ubuntu, Debian · Fedora · openSUSE</summary>
+**Ubuntu, Debian**
 
 ```sh
-# Ubuntu, Debian
 sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
 ```
 
+**Fedora**
+
 ```sh
-# Fedora
 sudo dnf install git python3 python3-pillow python3-gobject libadwaita
 ```
 
+**openSUSE**
+
 ```sh
-# openSUSE
 sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
 ```
-
-</details>
 
 **2. Download and install the app:**
 
@@ -80,7 +82,13 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-**3. Log out and log back in once**, so GNOME loads the trail.
+**3. Log out and log back in once**, so GNOME loads the trail. ***GNOME KNOWS BEST.***
+
+Use the menu at the top right, or this command. **Save your open work first**, it logs out right away:
+
+```sh
+gnome-session-quit --logout --no-prompt
+```
 
 **4. Open Cursor for osu!** from your applications and pick a skin. Done!
 
@@ -89,21 +97,22 @@ bash install.sh
 On Plasma the trail is a small KWin effect that **you build on your computer** in step 3.
 It takes a minute.
 
-**1. Install the packages.** Pick your distribution:
+**1. Install the packages.** Find your distribution below.
+
+> [!WARNING]
+> **Run only the command for your distribution, not all of them.**
+
+**Arch, CachyOS, Manjaro**
 
 ```sh
-# Arch, CachyOS, Manjaro
 sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel vulkan-headers
 ```
 
-<details>
-<summary>Kubuntu</summary>
+**Kubuntu**
 
 ```sh
 sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1 plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
 ```
-
-</details>
 
 **2. Download and install the app:**
 
@@ -113,25 +122,23 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-**3. Build and install the trail**, in the same terminal:
+**3. Build and install the trail**, in the same terminal. Again, **only the commands for your distribution**:
+
+**Arch, CachyOS, Manjaro**
 
 ```sh
-# Arch, CachyOS, Manjaro
 cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
 cmake --build build
 sudo cmake --install build
 ```
 
-<details>
-<summary>Kubuntu</summary>
+**Kubuntu**
 
 ```sh
 cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
 cmake --build build
 sudo cmake --install build
 ```
-
-</details>
 
 **4. Log out and log back in once.**
 
@@ -292,32 +299,34 @@ veya **Konsol**, KDE Plasma'da **Konsole**.
 
 Trail **GNOME Shell 51** için yapıldı. İmleç her GNOME'da çalışır.
 
-**1. Paketleri kur.** Dağıtımını seç:
+**1. Paketleri kur.** Aşağıda dağıtımını bul.
+
+> [!WARNING]
+> **Sadece kendi dağıtımının komutunu çalıştır, hepsini değil.**
+
+**Arch, CachyOS, Manjaro**
 
 ```sh
-# Arch, CachyOS, Manjaro
 sudo pacman -S --needed git python python-pillow python-gobject libadwaita
 ```
 
-<details>
-<summary>Ubuntu, Debian · Fedora · openSUSE</summary>
+**Ubuntu, Debian**
 
 ```sh
-# Ubuntu, Debian
 sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
 ```
 
+**Fedora**
+
 ```sh
-# Fedora
 sudo dnf install git python3 python3-pillow python3-gobject libadwaita
 ```
 
+**openSUSE**
+
 ```sh
-# openSUSE
 sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
 ```
-
-</details>
 
 **2. Uygulamayı indir ve kur:**
 
@@ -327,7 +336,13 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-**3. Bir kez oturumu kapatıp tekrar aç**, GNOME trail'i böyle yükler.
+**3. Bir kez oturumu kapatıp tekrar aç**, GNOME trail'i böyle yükler. ***GNOME KNOWS BEST.***
+
+Sağ üstteki menüyü ya da bu komutu kullan. **Önce açık işlerini kaydet**, hemen oturumu kapatır:
+
+```sh
+gnome-session-quit --logout --no-prompt
+```
 
 **4. Uygulamalarından Cursor for osu!'yu aç** ve bir skin seç. Bu kadar!
 
@@ -336,21 +351,22 @@ bash install.sh
 Plasma'da trail küçük bir KWin efektidir ve 3. adımda **onu kendi bilgisayarında derlersin**.
 Bir dakika sürer.
 
-**1. Paketleri kur.** Dağıtımını seç:
+**1. Paketleri kur.** Aşağıda dağıtımını bul.
+
+> [!WARNING]
+> **Sadece kendi dağıtımının komutunu çalıştır, hepsini değil.**
+
+**Arch, CachyOS, Manjaro**
 
 ```sh
-# Arch, CachyOS, Manjaro
 sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel vulkan-headers
 ```
 
-<details>
-<summary>Kubuntu</summary>
+**Kubuntu**
 
 ```sh
 sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1 plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
 ```
-
-</details>
 
 **2. Uygulamayı indir ve kur:**
 
@@ -360,25 +376,23 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-**3. Aynı terminalde trail'i derle ve kur:**
+**3. Aynı terminalde trail'i derle ve kur.** Yine **sadece kendi dağıtımının komutlarını** çalıştır:
+
+**Arch, CachyOS, Manjaro**
 
 ```sh
-# Arch, CachyOS, Manjaro
 cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
 cmake --build build
 sudo cmake --install build
 ```
 
-<details>
-<summary>Kubuntu</summary>
+**Kubuntu**
 
 ```sh
 cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
 cmake --build build
 sudo cmake --install build
 ```
-
-</details>
 
 **4. Bir kez oturumu kapatıp tekrar aç.**
 
