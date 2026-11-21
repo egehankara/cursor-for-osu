@@ -6,6 +6,8 @@
 
 **Your osu! skin's cursor and cursor trail, on your whole Linux desktop.**
 
+<img src="data/screenshots/trail.gif" width="600" alt="An osu! skin cursor with its yellow trail moving over a dark background">
+
 GNOME and KDE Plasma · Wayland · 10 languages
 
 [English](#english) · [Türkçe](#türkçe)
