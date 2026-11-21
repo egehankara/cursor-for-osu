@@ -42,6 +42,12 @@ def test_flags_outside_general_are_ignored():
     assert parse_general(b"[Colours]\nCursorRotate: 0\n") == {}
 
 
+def test_lines_before_any_header_are_general():
+    # A real skin had a stray character in front of its header, osu!lazer still reads it.
+    ini = "\ufeff\u00ac[General]\r\nName: #azer8midnight\r\nAuthor: mixed\r\n".encode()
+    assert parse_general(ini) == {"name": "#azer8midnight", "author": "mixed"}
+
+
 def test_disjoint_depends_on_cursormiddle(tmp_path):
     plain = load_skin(osk(tmp_path, {"cursor.png": png(), "cursortrail.png": png()}, "a.osk"))
     full = load_skin(

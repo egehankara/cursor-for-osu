@@ -155,7 +155,9 @@ def _oversized_cursor(files: dict[str, bytes]) -> tuple[int, int] | None:
 def parse_general(data: bytes) -> dict[str, str]:
     """Return the [General] section of a skin.ini."""
     values: dict[str, str] = {}
-    section = None
+    # Like osu!lazer, lines before the first section header belong to [General]. Some
+    # skins have a stray character in front of "[General]", which is not a header then.
+    section = "general"
     for raw_line in data.decode("utf-8-sig", errors="replace").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("//"):
