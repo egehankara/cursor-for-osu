@@ -118,6 +118,8 @@ add_plugin_path() {
 
 remove_plugin_path() {
     rm -f "$environment_file" "$plasma_env_file"
+    # The folders too, when nothing else is in them. They were usually made for these files.
+    rmdir -p "$(dirname "$environment_file")" "$(dirname "$plasma_env_file")" 2>/dev/null || true
     local current rest
     current="$(systemctl --user show-environment 2>/dev/null | sed -n 's/^QT_PLUGIN_PATH=//p' || true)"
     case ":$current:" in
