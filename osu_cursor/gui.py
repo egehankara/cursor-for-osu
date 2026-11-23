@@ -181,14 +181,26 @@ class Window(Adw.ApplicationWindow):
         self._toasts = Adw.ToastOverlay(child=Adw.Clamp(child=with_drop_zone, maximum_size=900))
         self._toasts.add_css_class("drop-target")
         content = Adw.ToolbarView(content=self._toasts)
-        header = Adw.HeaderBar(title_widget=self._title)
         about_button = Gtk.Button(icon_name="help-about-symbolic", tooltip_text=_("About Cursor for osu!"))
         about_button.connect("clicked", lambda _button: self._show_about())
         # Opens the settings changed once and left alone, right under the size. Closed at start.
-        self._more_button = Gtk.ToggleButton(icon_name="emblem-system-symbolic", tooltip_text=_("More settings"))
+        # Labelled, since a bare gear beside the window buttons was easy to miss.
+        self._more_button = Gtk.ToggleButton(
+            child=Adw.ButtonContent(icon_name="emblem-system-symbolic", label=_("Settings")),
+            tooltip_text=_("More settings"),
+        )
         self._more_button.bind_property("active", self._more_settings, "reveal-child", 0)
-        header.pack_end(about_button)
-        header.pack_end(self._more_button)
+        # The title is centred in the space left of the buttons, not in the window.
+        # A header bar centres its middle part in the window, so the whole row,
+        # window buttons included, goes in the middle and the title fills the gap.
+        self._title.set_hexpand(True)
+        row = Gtk.Box(spacing=6, hexpand=True)
+        row.append(Gtk.WindowControls(side=Gtk.PackType.START))
+        for widget in (self._title, self._more_button, about_button,
+                       Gtk.WindowControls(side=Gtk.PackType.END)):
+            row.append(widget)
+        header = Adw.HeaderBar(title_widget=row, show_start_title_buttons=False,
+                               show_end_title_buttons=False)
         content.add_top_bar(header)
         content.add_top_bar(self._banner)
         content.add_top_bar(self._update_banner)
