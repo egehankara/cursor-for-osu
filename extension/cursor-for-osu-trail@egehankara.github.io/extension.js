@@ -25,7 +25,10 @@ class OsuCursorTrailActor extends Clutter.Actor {
         super._init({reactive: false, visible: false});
         this._xs = new Float32Array(MAX_PARTS);
         this._ys = new Float32Array(MAX_PARTS);
-        this._born = new Float64Array(MAX_PARTS).fill(-Infinity);
+        this._born = new Float64Array(MAX_PARTS);
+        // Parts are added in the order they were born, so the live ones always sit
+        // together, from the oldest up to the write position.
+        this._oldest = 0;
         this._next = 0;
         this._alive = 0;
         this._clock = 0;
@@ -53,7 +56,7 @@ class OsuCursorTrailActor extends Clutter.Actor {
     }
 
     clear() {
-        this._born.fill(-Infinity);
+        this._oldest = 0;
         this._next = 0;
         this._alive = 0;
         this._bounds = null;
@@ -65,6 +68,11 @@ class OsuCursorTrailActor extends Clutter.Actor {
         this._ys[this._next] = y;
         this._born[this._next] = born;
         this._next = (this._next + 1) % MAX_PARTS;
+        // A full buffer drops the oldest part.
+        if (this._alive === MAX_PARTS)
+            this._oldest = this._next;
+        else
+            this._alive++;
     }
 
     // Moves the trail clock, which only runs while the trail is animating.
@@ -72,19 +80,22 @@ class OsuCursorTrailActor extends Clutter.Actor {
         this._clock += milliseconds;
     }
 
-    // Recounts live parts and the screen area they cover. Returns the live count.
+    // Drops the parts that faded and finds the screen area the rest cover.
+    // Returns the live count.
     refresh() {
         const {fade, margin} = this._config;
-        let alive = 0;
+        while (this._alive > 0 && this._clock - this._born[this._oldest] >= fade) {
+            this._oldest = (this._oldest + 1) % MAX_PARTS;
+            this._alive--;
+        }
+
         let left = Infinity;
         let top = Infinity;
         let right = -Infinity;
         let bottom = -Infinity;
 
-        for (let i = 0; i < MAX_PARTS; i++) {
-            if (this._clock - this._born[i] >= fade)
-                continue;
-            alive++;
+        for (let n = 0; n < this._alive; n++) {
+            const i = (this._oldest + n) % MAX_PARTS;
             const x = this._xs[i];
             const y = this._ys[i];
             if (x < left)
@@ -97,13 +108,12 @@ class OsuCursorTrailActor extends Clutter.Actor {
                 bottom = y;
         }
 
-        this._alive = alive;
-        this._bounds = alive > 0
+        this._bounds = this._alive > 0
             ? {x: left - margin, y: top - margin, width: right - left + 2 * margin, height: bottom - top + 2 * margin}
             : null;
         // Clutter caches the paint volume and would keep redrawing the old area.
         this.invalidate_paint_volume();
-        return alive;
+        return this._alive;
     }
 
     vfunc_get_paint_volume(volume) {
@@ -126,13 +136,10 @@ class OsuCursorTrailActor extends Clutter.Actor {
         const x2 = x1 + width;
         const y2 = y1 + height;
 
-        // Starting at the write position draws the oldest parts first.
-        for (let n = 0; n < MAX_PARTS; n++) {
-            const i = (this._next + n) % MAX_PARTS;
+        // Oldest first, so newer parts are drawn on top.
+        for (let n = 0; n < this._alive; n++) {
+            const i = (this._oldest + n) % MAX_PARTS;
             const age = this._clock - this._born[i];
-            if (age >= fade)
-                continue;
-
             const alpha = 1 - age / fade;
             const level = Math.min(ALPHA_LEVELS - 1, Math.round(alpha * (ALPHA_LEVELS - 1)));
             if (level === 0)
