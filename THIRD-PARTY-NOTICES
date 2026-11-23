@@ -1,5 +1,6 @@
 The cursor sizing in osu_cursor/render.py and the trail behaviour in the GNOME
-Shell extension are adapted from osu!, which comes with this notice:
+Shell extension (extension/) and the KWin effect (kwin/) are adapted from osu!,
+which comes with this notice:
 
 Copyright (c) 2025 ppy Pty Ltd <contact@ppy.sh>.
 

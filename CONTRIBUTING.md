@@ -9,13 +9,15 @@
 ```sh
 git clone https://github.com/egehankara/cursor-for-osu.git
 cd cursor-for-osu
-bash install.sh            # installs the app and the trail extension for your user
+bash install.sh            # installs the app and the trail (GNOME extension or KWin effect) for your user
 python3 -m osu_cursor      # runs the app straight from the source folder
 python3 -m pytest          # runs the tests
 ```
 
 `install.sh` copies the code, so run it again after a change to try it from the app launcher.
-GNOME Shell only loads a changed extension (`extension/`) after you log out and back in.
+GNOME Shell only loads a changed extension (`extension/`) after you log out and back in. On KDE
+Plasma `install.sh` rebuilds the KWin effect (`kwin/`); its tests run with
+`cmake -S kwin -B build && cmake --build build && ctest --test-dir build`.
 
 ### Where things are
 
@@ -23,12 +25,15 @@ GNOME Shell only loads a changed extension (`extension/`) after you log out and 
 | --- | --- |
 | `osu_cursor/gui.py` | The window |
 | `osu_cursor/gnome.py` | Skin list, settings, applying a skin on GNOME |
+| `osu_cursor/plasma.py` | KDE Plasma: cursor settings, screen size, trail effect status |
+| `osu_cursor/update.py` | Checking GitHub for a new version |
 | `osu_cursor/skin.py` | Reading `.osk` files and skin folders |
 | `osu_cursor/render.py` | Sizing the cursor like osu!lazer |
 | `osu_cursor/system.py` | The kept system cursors, painted in the skin's colour |
 | `osu_cursor/xcursor.py` | Reading and writing Xcursor files |
 | `osu_cursor/i18n.py`, `osu_cursor/locale/` | Translations |
 | `extension/` | GNOME Shell extension that draws the trail |
+| `kwin/` | KWin effect that draws the trail on KDE Plasma, and `trail.sh` that builds it |
 | `install.sh`, `uninstall.sh` | Install and uninstall |
 
 ### Text and translations
@@ -66,13 +71,15 @@ Never commit skin images or `.osk` files, they belong to their creators.
 ```sh
 git clone https://github.com/egehankara/cursor-for-osu.git
 cd cursor-for-osu
-bash install.sh            # uygulamayı ve trail eklentisini kendi kullanıcın için kurar
+bash install.sh            # uygulamayı ve trail'i (GNOME eklentisi ya da KWin efekti) kendi kullanıcın için kurar
 python3 -m osu_cursor      # uygulamayı doğrudan kaynak klasörden çalıştırır
 python3 -m pytest          # testleri çalıştırır
 ```
 
 `install.sh` kodu kopyalar, bu yüzden bir değişikliği uygulamalar menüsünden denemek için onu tekrar çalıştır.
-GNOME Shell, değişen eklentiyi (`extension/`) ancak oturumu kapatıp açınca yükler.
+GNOME Shell, değişen eklentiyi (`extension/`) ancak oturumu kapatıp açınca yükler. KDE Plasma'da
+`install.sh` KWin efektini (`kwin/`) yeniden derler. Testleri
+`cmake -S kwin -B build && cmake --build build && ctest --test-dir build` ile çalışır.
 
 ### Neyin nerede olduğu
 
@@ -80,12 +87,15 @@ GNOME Shell, değişen eklentiyi (`extension/`) ancak oturumu kapatıp açınca 
 | --- | --- |
 | `osu_cursor/gui.py` | Pencere |
 | `osu_cursor/gnome.py` | Skin listesi, ayarlar, skin'i GNOME'a uygulama |
+| `osu_cursor/plasma.py` | KDE Plasma: imleç ayarları, ekran boyutu, trail efektinin durumu |
+| `osu_cursor/update.py` | GitHub'da yeni sürüm olup olmadığına bakma |
 | `osu_cursor/skin.py` | `.osk` dosyalarını ve skin klasörlerini okuma |
 | `osu_cursor/render.py` | İmleci osu!lazer'deki gibi boyutlandırma |
 | `osu_cursor/system.py` | Korunan sistem imleçleri, skinin rengine boyanmış |
 | `osu_cursor/xcursor.py` | Xcursor dosyalarını okuma ve yazma |
 | `osu_cursor/i18n.py`, `osu_cursor/locale/` | Çeviriler |
 | `extension/` | Trail'i çizen GNOME Shell eklentisi |
+| `kwin/` | KDE Plasma'da trail'i çizen KWin efekti ve onu derleyen `trail.sh` |
 | `install.sh`, `uninstall.sh` | Kurma ve kaldırma |
 
 ### Yazılar ve çeviriler
