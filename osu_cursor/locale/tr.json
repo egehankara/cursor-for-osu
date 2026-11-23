@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "Plasma imleç temasını uygulamayı tamamlamak için oturumu kapatıp tekrar aç.",
   "The Plasma trail data could not be loaded.": "Plasma imleç izi verileri yüklenemedi.",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Plasma Masaüstü Efektleri bölümünde Cursor for osu! Trail'i etkinleştir.",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin imleç izi efekti kullanılamıyor. Efekti kurulu KWin sürümün için derle.",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Kuruldu. KDE Plasma'da imleç izi efektini ayrıca derleyip etkinleştir.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Kaldırmadan önce bir Plasma Wayland oturumunda reset komutunu çalıştır."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Kaldırmadan önce bir Plasma Wayland oturumunda reset komutunu çalıştır.",
+  "Building the trail effect, this takes a minute...": "İmleç izi efekti derleniyor, bir dakika sürer...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "Kuruldu. İmleç izi efektinin yüklenmesi için bir kez oturumu kapatıp tekrar aç.",
+  "Installed. The trail effect is already running, no need to log out.": "Kuruldu. İmleç izi efekti zaten çalışıyor, oturumu kapatmana gerek yok.",
+  "The app is installed, only the trail is missing. The cursor works without it.": "Uygulama kuruldu, sadece imleç izi eksik. İmleç onsuz da çalışır.",
+  "The full build output is in {file}.": "Derlemenin tüm çıktısı {file} dosyasında.",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "İmleç izi efekti derlenemedi. Şu paketleri kurup install.sh'i tekrar çalıştır: {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "İmleç izinin eski bir kopyası sistem klasöründe. Onu silmek için şifren gerekiyor.",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} imleç izi için çok eski, Plasma 6.6 veya daha yenisi gerekir. İmleç onsuz da çalışır.",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma güncellendi ve imleç izi yeniden derlenemedi. Nedenini görmek için install.sh'i tekrar çalıştır.",
+  "Remove it yourself: {command}": "Kendin sil: {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "İmleç izi efekti henüz yüklenmedi. Bir kez oturumu kapatıp tekrar aç.",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "İmleç izi yeni Plasma için yeniden derlendi. Yüklenmesi için bir kez oturumu kapatıp tekrar aç."
 }

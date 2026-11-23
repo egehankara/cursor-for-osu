@@ -94,10 +94,22 @@ for icon in "$source_dir"/data/icons/hicolor/*/apps/*.svg; do
 done
 
 if PYTHONPATH="$app_dir" python3 -c 'from osu_cursor.plasma import selected; raise SystemExit(not selected())'; then
-    say "Installed. Build and enable the trail effect separately in KDE Plasma."
+    # On Plasma the trail is a KWin effect, built here for the KWin on this computer. Its
+    # sources go next to the app, so it can be rebuilt there after a Plasma update.
+    rm -rf "$data_home/osu-cursor/kwin"
+    cp -r "$source_dir/kwin" "$data_home/osu-cursor/kwin"
+    say "Building the trail effect, this takes a minute..."
+    trail_result=0
+    bash "$data_home/osu-cursor/kwin/trail.sh" install || trail_result=$?
+    case "$trail_result" in
+        0) say "Installed. The trail effect is already running, no need to log out." ;;
+        10) say "Installed. Log out and back in once so the trail effect is loaded." ;;
+        *) say "The app is installed, only the trail is missing. The cursor works without it." ;;
+    esac
     if [ "${app_was_open:-}" = true ]; then
         say "Cursor for osu! was open and has been closed. Open it again to use the new version."
     fi
+    [ "$trail_result" = 0 ] || [ "$trail_result" = 10 ] || exit 1
     exit 0
 fi
 

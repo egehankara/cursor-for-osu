@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "ログアウトして再ログインし、Plasma のカーソルテーマの適用を完了してください。",
   "The Plasma trail data could not be loaded.": "Plasma のカーソル軌跡データを読み込めませんでした。",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Plasma のデスクトップ効果で Cursor for osu! Trail を有効にしてください。",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin の軌跡効果を利用できません。インストール済みの KWin に合わせてビルドしてください。",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "インストールしました。KDE Plasma の軌跡効果は別途ビルドして有効にしてください。",
-  "Run reset from a Plasma Wayland session before uninstalling.": "アンインストール前に、Plasma の Wayland セッションで reset を実行してください。"
+  "Run reset from a Plasma Wayland session before uninstalling.": "アンインストール前に、Plasma の Wayland セッションで reset を実行してください。",
+  "Building the trail effect, this takes a minute...": "軌跡効果をビルドしています。1 分ほどかかります...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "インストールしました。軌跡効果を読み込むため、一度ログアウトして再ログインしてください。",
+  "Installed. The trail effect is already running, no need to log out.": "インストールしました。軌跡効果はすでに動作中なので、ログアウトは不要です。",
+  "The app is installed, only the trail is missing. The cursor works without it.": "アプリはインストールされましたが、軌跡だけがありません。カーソルは軌跡なしでも動作します。",
+  "The full build output is in {file}.": "ビルドの全出力は {file} にあります。",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "軌跡効果をビルドできませんでした。次のパッケージをインストールして install.sh を再実行してください: {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "システムフォルダーに古い軌跡のコピーがあります。削除するにはパスワードが必要です。",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} は軌跡には古すぎます。Plasma 6.6 以降が必要です。カーソルは軌跡なしでも動作します。",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma が更新され、軌跡を再ビルドできませんでした。原因を確認するには install.sh を再実行してください。",
+  "Remove it yourself: {command}": "手動で削除してください: {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "軌跡効果はまだ読み込まれていません。一度ログアウトして再ログインしてください。",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "新しい Plasma 用に軌跡を再ビルドしました。読み込むには一度ログアウトして再ログインしてください。"
 }

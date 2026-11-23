@@ -6,8 +6,6 @@ import json
 import math
 import os
 import re
-import shlex
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -123,22 +121,6 @@ def screen_size() -> tuple[int, int]:
     return 1920, 1080
 
 
-def qt_plugin_dir_argument() -> str:
-    """Where KWin effects go, for the cmake command shown to the user.
-
-    Asked of qtpaths6 now, so the command is the same on every distribution. If that
-    fails, the README's command is shown, which asks it when the user runs it.
-    """
-    qtpaths = shutil.which("qtpaths6") or "/usr/lib/qt6/bin/qtpaths6"
-    try:
-        folder = _run(qtpaths, "--query", "QT_INSTALL_PLUGINS").stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        folder = ""
-    if folder and Path(folder).is_dir():
-        return shlex.quote(folder)
-    return f'"$({qtpaths} --query QT_INSTALL_PLUGINS)"'
-
-
 def effect_status() -> str:
     if _effect_call("isEffectLoaded", "(s)", (EFFECT_ID,)):
         return "active"
@@ -176,7 +158,7 @@ def trail_problem(state: dict, directory: Path) -> str | None:
     if status == "disabled":
         return _("Enable Cursor for osu! Trail in Plasma Desktop Effects.")
     if status == "unavailable":
-        return _("The KWin trail effect is unavailable. Build it for your installed KWin version.")
+        return _("The trail effect is not loaded yet. Log out and back in once.")
     if _effect_call("debug", "(ss)", (EFFECT_ID, "state")) == "invalid":
         return _("The Plasma trail data could not be loaded.")
     return None

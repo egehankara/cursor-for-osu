@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "Saia da sessão e entre novamente para concluir a aplicação do tema do cursor do Plasma.",
   "The Plasma trail data could not be loaded.": "Não foi possível carregar os dados do rastro do Plasma.",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Ative Cursor for osu! Trail nos Efeitos da Área de Trabalho do Plasma.",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "O efeito de rastro do KWin está indisponível. Compile-o para a versão instalada do KWin.",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Instalado. Compile e ative o efeito de rastro separadamente no KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Execute reset em uma sessão Wayland do Plasma antes de desinstalar."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Execute reset em uma sessão Wayland do Plasma antes de desinstalar.",
+  "Building the trail effect, this takes a minute...": "Compilando o efeito de rastro, leva um minuto...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "Instalado. Saia e entre na sessão uma vez para carregar o efeito de rastro.",
+  "Installed. The trail effect is already running, no need to log out.": "Instalado. O efeito de rastro já está rodando, não precisa sair da sessão.",
+  "The app is installed, only the trail is missing. The cursor works without it.": "O aplicativo está instalado, só falta o rastro. O cursor funciona sem ele.",
+  "The full build output is in {file}.": "A saída completa da compilação está em {file}.",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "Não foi possível compilar o efeito de rastro. Instale estes pacotes e execute install.sh de novo: {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "Há uma cópia antiga do rastro na pasta do sistema. Removê-la precisa da sua senha.",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "O KWin {version} é antigo demais para o rastro, ele precisa do Plasma 6.6 ou mais novo. O cursor funciona sem ele.",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "O Plasma foi atualizado e não foi possível recompilar o rastro. Execute install.sh de novo para ver o motivo.",
+  "Remove it yourself: {command}": "Remova você mesmo: {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "O efeito de rastro ainda não foi carregado. Saia e entre na sessão uma vez.",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "O rastro foi recompilado para o novo Plasma. Saia e entre na sessão uma vez para carregá-lo."
 }

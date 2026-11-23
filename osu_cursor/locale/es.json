@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "Cierra la sesión y vuelve a iniciarla para terminar de aplicar el tema del cursor de Plasma.",
   "The Plasma trail data could not be loaded.": "No se pudieron cargar los datos de la estela de Plasma.",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Activa Cursor for osu! Trail en los efectos de escritorio de Plasma.",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "El efecto de estela de KWin no está disponible. Compílalo para tu versión de KWin.",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Instalado. Compila y activa por separado el efecto de estela en KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Ejecuta reset desde una sesión Wayland de Plasma antes de desinstalar."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Ejecuta reset desde una sesión Wayland de Plasma antes de desinstalar.",
+  "Building the trail effect, this takes a minute...": "Compilando el efecto de estela, tarda un minuto...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "Instalado. Cierra sesión y vuelve a entrar una vez para cargar el efecto de estela.",
+  "Installed. The trail effect is already running, no need to log out.": "Instalado. El efecto de estela ya está en marcha, no hace falta cerrar sesión.",
+  "The app is installed, only the trail is missing. The cursor works without it.": "La aplicación está instalada, solo falta la estela. El cursor funciona sin ella.",
+  "The full build output is in {file}.": "La salida completa de la compilación está en {file}.",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "No se pudo compilar el efecto de estela. Instala estos paquetes y vuelve a ejecutar install.sh: {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "Hay una copia antigua de la estela en la carpeta del sistema. Quitarla requiere tu contraseña.",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} es demasiado antiguo para la estela, necesita Plasma 6.6 o posterior. El cursor funciona sin ella.",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma se actualizó y no se pudo recompilar la estela. Vuelve a ejecutar install.sh para ver por qué.",
+  "Remove it yourself: {command}": "Quítala tú mismo: {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "El efecto de estela aún no está cargado. Cierra sesión y vuelve a entrar una vez.",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "La estela se recompiló para el nuevo Plasma. Cierra sesión y vuelve a entrar una vez para cargarla."
 }

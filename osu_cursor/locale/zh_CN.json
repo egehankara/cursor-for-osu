@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "请注销并重新登录以完成 Plasma 光标主题的应用。",
   "The Plasma trail data could not be loaded.": "无法加载 Plasma 光标轨迹数据。",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "请在 Plasma 桌面特效中启用 Cursor for osu! Trail。",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "KWin 光标轨迹特效不可用。请为已安装的 KWin 版本编译此特效。",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "安装完成。请在 KDE Plasma 中单独编译并启用光标轨迹特效。",
-  "Run reset from a Plasma Wayland session before uninstalling.": "卸载前请在 Plasma Wayland 会话中运行 reset。"
+  "Run reset from a Plasma Wayland session before uninstalling.": "卸载前请在 Plasma Wayland 会话中运行 reset。",
+  "Building the trail effect, this takes a minute...": "正在编译光标轨迹特效，需要一分钟……",
+  "Installed. Log out and back in once so the trail effect is loaded.": "安装完成。请注销并重新登录一次以加载光标轨迹特效。",
+  "Installed. The trail effect is already running, no need to log out.": "安装完成。光标轨迹特效已在运行，无需注销。",
+  "The app is installed, only the trail is missing. The cursor works without it.": "应用已安装，只是缺少光标轨迹。没有它光标也能正常使用。",
+  "The full build output is in {file}.": "完整的编译输出在 {file}。",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "无法编译光标轨迹特效。请安装这些软件包后重新运行 install.sh：{command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "系统文件夹中有旧版光标轨迹副本。删除它需要你的密码。",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} 太旧，光标轨迹需要 Plasma 6.6 或更新版本。没有它光标也能正常使用。",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma 已更新，但无法重新编译光标轨迹。请重新运行 install.sh 查看原因。",
+  "Remove it yourself: {command}": "请自行删除：{command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "光标轨迹特效尚未加载。请注销并重新登录一次。",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "已为新版 Plasma 重新编译光标轨迹。请注销并重新登录一次以加载它。"
 }

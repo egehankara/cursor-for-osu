@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "Déconnectez-vous puis reconnectez-vous pour terminer l’application du thème du pointeur de Plasma.",
   "The Plasma trail data could not be loaded.": "Impossible de charger les données de la traînée dans Plasma.",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Activez Cursor for osu! Trail dans les effets du bureau de Plasma.",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "L’effet de traînée KWin est indisponible. Compilez-le pour votre version de KWin.",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Installation terminée. Compilez et activez séparément l’effet de traînée dans KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Exécutez reset depuis une session Plasma sous Wayland avant la désinstallation."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Exécutez reset depuis une session Plasma sous Wayland avant la désinstallation.",
+  "Building the trail effect, this takes a minute...": "Compilation de l’effet de traînée, cela prend une minute...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "Installation terminée. Déconnecte-toi puis reconnecte-toi une fois pour charger l’effet de traînée.",
+  "Installed. The trail effect is already running, no need to log out.": "Installation terminée. L’effet de traînée tourne déjà, inutile de te déconnecter.",
+  "The app is installed, only the trail is missing. The cursor works without it.": "L’application est installée, seule la traînée manque. Le curseur fonctionne sans elle.",
+  "The full build output is in {file}.": "La sortie complète de la compilation se trouve dans {file}.",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "L’effet de traînée n’a pas pu être compilé. Installe ces paquets et relance install.sh : {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "Une ancienne copie de la traînée se trouve dans le dossier système. La supprimer demande ton mot de passe.",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} est trop ancien pour la traînée, il faut Plasma 6.6 ou plus récent. Le curseur fonctionne sans elle.",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma a été mis à jour et la traînée n’a pas pu être recompilée. Relance install.sh pour voir pourquoi.",
+  "Remove it yourself: {command}": "Supprime-la toi-même : {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "L’effet de traînée n’est pas encore chargé. Déconnecte-toi puis reconnecte-toi une fois.",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "La traînée a été recompilée pour le nouveau Plasma. Déconnecte-toi puis reconnecte-toi une fois pour la charger."
 }

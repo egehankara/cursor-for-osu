@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "Wyloguj się i zaloguj ponownie, aby dokończyć stosowanie motywu kursora Plasmy.",
   "The Plasma trail data could not be loaded.": "Nie udało się wczytać danych śladu kursora w Plasmie.",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Włącz Cursor for osu! Trail w efektach pulpitu Plasmy.",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "Efekt śladu KWin jest niedostępny. Skompiluj go dla zainstalowanej wersji KWin.",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Zainstalowano. Skompiluj i włącz efekt śladu osobno w KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Przed odinstalowaniem uruchom reset w sesji Plasma Wayland."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Przed odinstalowaniem uruchom reset w sesji Plasma Wayland.",
+  "Building the trail effect, this takes a minute...": "Kompilowanie efektu śladu, to potrwa minutę...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "Zainstalowano. Wyloguj się i zaloguj ponownie raz, aby efekt śladu został wczytany.",
+  "Installed. The trail effect is already running, no need to log out.": "Zainstalowano. Efekt śladu już działa, nie trzeba się wylogowywać.",
+  "The app is installed, only the trail is missing. The cursor works without it.": "Aplikacja jest zainstalowana, brakuje tylko śladu. Kursor działa bez niego.",
+  "The full build output is in {file}.": "Pełne wyjście kompilacji jest w {file}.",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "Nie udało się skompilować efektu śladu. Zainstaluj te pakiety i uruchom ponownie install.sh: {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "W folderze systemowym jest starsza kopia śladu. Usunięcie jej wymaga twojego hasła.",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} jest za stary dla śladu, potrzebna jest Plasma 6.6 lub nowsza. Kursor działa bez niego.",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma została zaktualizowana i nie udało się ponownie skompilować śladu. Uruchom ponownie install.sh, aby zobaczyć dlaczego.",
+  "Remove it yourself: {command}": "Usuń ją sam: {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "Efekt śladu nie jest jeszcze wczytany. Wyloguj się i zaloguj ponownie raz.",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "Ślad został ponownie skompilowany dla nowej Plasmy. Wyloguj się i zaloguj ponownie raz, aby go wczytać."
 }

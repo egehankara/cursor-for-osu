@@ -461,13 +461,7 @@ class Window(Adw.ApplicationWindow):
             "bash install.sh",
         ]
         if plasma.selected():
-            # The KWin effect is built on the computer, like in step 3 of the README.
-            lines += [
-                "cmake -S kwin -B build \\",
-                f"    -DKDE_INSTALL_PLUGINDIR={plasma.qt_plugin_dir_argument()}",
-                "cmake --build build",
-                "sudo cmake --install build",
-            ]
+            # install.sh also builds the KWin effect and installs it with sudo.
             after = _("Then log out and back in once, so the new trail effect is loaded.")
         else:
             after = _("Then log out and back in once, so the new trail extension is loaded.")

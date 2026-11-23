@@ -28,7 +28,7 @@ def python_messages() -> set[str]:
 
 def shell_messages() -> set[str]:
     found = set()
-    for path in ROOT.glob("*.sh"):
+    for path in [*ROOT.glob("*.sh"), *ROOT.glob("kwin/*.sh")]:
         for match in SHELL_MESSAGE.finditer(path.read_text()):
             found.add(match.group(1).replace('\\"', '"'))
     return found

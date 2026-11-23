@@ -91,6 +91,14 @@ for name in ("enabled-extensions", "disabled-extensions"):
         subprocess.run(["gsettings", "set", *key, str(remaining)], check=True)
 EOF
 
+# The KWin trail, its plugin path and its login check. Earlier versions put it in the system
+# folder with sudo, that copy goes too.
+if [ -e "$data_dir/kwin/trail.sh" ]; then
+    bash "$data_dir/kwin/trail.sh" remove || true
+elif [ -e "$script_dir/kwin/trail.sh" ]; then
+    bash "$script_dir/kwin/trail.sh" remove || true
+fi
+
 rm -rf "$extension_dir" "$data_home/gnome-shell/extensions/$old_uuid"
 rm -f "$bin_dir/cursor-for-osu" "$data_home/applications/cursor-for-osu.desktop"
 rm -f "$icon_dir/scalable/apps/io.github.egehankara.CursorForOsu.svg" \
@@ -106,7 +114,7 @@ for theme in "$data_home/icons"/osu-cursor-*; do
 done
 
 if $keep_data; then
-    rm -rf "$app_dir" "$data_dir/source" "$data_dir/plasma" "$data_dir/uninstall.sh"
+    rm -rf "$app_dir" "$data_dir/source" "$data_dir/plasma" "$data_dir/kwin" "$data_dir/uninstall.sh"
     rm -f "$data_dir/state.json" "$data_dir/previous.json" "$data_dir/extension-off.json" "$data_dir/install-source" "$data_dir"/trail-*.rgba
     echo "$removed_message"
     echo "$kept_message"

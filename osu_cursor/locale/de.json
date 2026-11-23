@@ -136,7 +136,17 @@
   "Log out and back in to finish applying the Plasma cursor theme.": "Melde dich ab und wieder an, um das Plasma-Zeigerdesign vollständig anzuwenden.",
   "The Plasma trail data could not be loaded.": "Die Daten für die Plasma-Zeigerspur konnten nicht geladen werden.",
   "Enable Cursor for osu! Trail in Plasma Desktop Effects.": "Aktiviere Cursor for osu! Trail in den Plasma-Arbeitsflächeneffekten.",
-  "The KWin trail effect is unavailable. Build it for your installed KWin version.": "Der KWin-Spureffekt ist nicht verfügbar. Erstelle ihn für deine installierte KWin-Version.",
-  "Installed. Build and enable the trail effect separately in KDE Plasma.": "Installiert. Erstelle und aktiviere den Spureffekt separat in KDE Plasma.",
-  "Run reset from a Plasma Wayland session before uninstalling.": "Führe reset vor der Deinstallation in einer Plasma-Wayland-Sitzung aus."
+  "Run reset from a Plasma Wayland session before uninstalling.": "Führe reset vor der Deinstallation in einer Plasma-Wayland-Sitzung aus.",
+  "Building the trail effect, this takes a minute...": "Der Spureffekt wird erstellt, das dauert eine Minute...",
+  "Installed. Log out and back in once so the trail effect is loaded.": "Installiert. Melde dich einmal ab und wieder an, damit der Spureffekt geladen wird.",
+  "Installed. The trail effect is already running, no need to log out.": "Installiert. Der Spureffekt läuft bereits, Abmelden ist nicht nötig.",
+  "The app is installed, only the trail is missing. The cursor works without it.": "Die App ist installiert, nur die Spur fehlt. Der Cursor funktioniert auch ohne sie.",
+  "The full build output is in {file}.": "Die vollständige Ausgabe des Builds steht in {file}.",
+  "The trail effect could not be built. Install these packages and run install.sh again: {command}": "Der Spureffekt konnte nicht erstellt werden. Installiere diese Pakete und führe install.sh erneut aus: {command}",
+  "An older copy of the trail is in the system folder. Removing it needs your password.": "Im Systemordner liegt eine ältere Kopie der Spur. Zum Entfernen wird dein Passwort benötigt.",
+  "KWin {version} is too old for the trail, it needs Plasma 6.6 or newer. The cursor works without it.": "KWin {version} ist zu alt für die Spur, sie braucht Plasma 6.6 oder neuer. Der Cursor funktioniert auch ohne sie.",
+  "Plasma was updated and the trail could not be rebuilt. Run install.sh again to see why.": "Plasma wurde aktualisiert und die Spur konnte nicht neu erstellt werden. Führe install.sh erneut aus, um den Grund zu sehen.",
+  "Remove it yourself: {command}": "Entferne sie selbst: {command}",
+  "The trail effect is not loaded yet. Log out and back in once.": "Der Spureffekt ist noch nicht geladen. Melde dich einmal ab und wieder an.",
+  "The trail was rebuilt for the new Plasma. Log out and back in once to load it.": "Die Spur wurde für das neue Plasma neu erstellt. Melde dich einmal ab und wieder an, um sie zu laden."
 }
