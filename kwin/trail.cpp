@@ -315,6 +315,14 @@ private:
             }
             m_texture->setFilter(GL_LINEAR);
             m_texture->setWrapMode(GL_CLAMP_TO_EDGE);
+            // The game samples textures through mipmaps, which keeps shrunken trails smooth.
+            // GLTexture::upload() makes a one-level texture, so its own mipmap filters fall
+            // back to GL_LINEAR; build the levels here. bind() applies the filter set above
+            // first and leaves the texture's filters alone after that.
+            m_texture->bind();
+            glGenerateMipmap(GL_TEXTURE_2D);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            m_texture->unbind();
         }
 
         ShaderBinder shader(ShaderTrait::MapTexture | ShaderTrait::Modulate | ShaderTrait::TransformColorspace);
