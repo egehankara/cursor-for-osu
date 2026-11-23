@@ -152,8 +152,9 @@ Open **Cursor for osu!** from your applications and click a skin. Done!
 
 ### Where do I get skins?
 
-- **From osu!lazer:** open the skin settings in the game and use **Export selected skin**. The
-  app picks up the export by itself, you don't need to do anything else.
+- **From osu!lazer:** in the game's skin settings, pick the skin and press **Export**, between
+  **Rename** and **Delete**. The app picks up the export by itself, you don't need to do
+  anything else. The game's own skins can't be exported.
 - **From the internet:** players share their skins as `.osk` files, on the osu! forums and on
   skin sites. Search for "osu! skins". Download the `.osk` and add it with the **.osk** button.
 

@@ -152,8 +152,9 @@ Uygulamalarından **Cursor for osu!**'yu aç ve bir skin'e tıkla. Bu kadar!
 
 ### Skin'leri nereden bulurum?
 
-- **osu!lazer'den:** oyunda skin ayarlarını aç ve **Export selected skin** düğmesini kullan.
-  Uygulama export'u kendiliğinden alır, başka bir şey yapmana gerek yok.
+- **osu!lazer'den:** oyunun skin ayarlarında skin'i seç ve **Rename** ile **Delete** arasındaki
+  **Export** düğmesine bas. Uygulama export'u kendiliğinden alır, başka bir şey yapmana gerek
+  yok. Oyunun kendi skin'leri export edilemez.
 - **İnternetten:** oyuncular skin'lerini `.osk` dosyası olarak osu! forumlarında ve skin
   sitelerinde paylaşır. "osu! skins" diye arat, `.osk` dosyasını indir ve **.osk** düğmesiyle ekle.
 
