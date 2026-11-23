@@ -98,12 +98,13 @@ build() {
     fi
 }
 
-# Puts the plugin folder on KWin's QT_PLUGIN_PATH: for the systemd session (now and at every
-# login) and for Plasma started without systemd.
+# Puts the plugin folder on KWin's QT_PLUGIN_PATH. Plasma runs the env script at every login
+# and hands its variables to the systemd session before KWin starts. Set that way, and not with
+# environment.d, uninstalling can take the variable away again without a reboot.
+# This session gets it right away, for a KWin that starts again.
 add_plugin_path() {
-    mkdir -p "$(dirname "$environment_file")" "$(dirname "$plasma_env_file")"
-    printf '%s\n' "# Lets KWin find the Cursor for osu! trail, made by its install.sh." \
-        "QT_PLUGIN_PATH=$plugin_root\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}" >"$environment_file"
+    rm -f "$environment_file"  # used by a build before this one
+    mkdir -p "$(dirname "$plasma_env_file")"
     printf '%s\n' "# Lets KWin find the Cursor for osu! trail, made by its install.sh." \
         "case \":\${QT_PLUGIN_PATH:-}:\" in *\":$plugin_root:\"*) ;; *) export QT_PLUGIN_PATH=\"$plugin_root\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}\" ;; esac" \
         >"$plasma_env_file"
@@ -204,6 +205,7 @@ case "${1:-}" in
         kwriteconfig6 --file kwinrc --group Plugins --key "${effect}Enabled" --delete 2>/dev/null || true
         rm -f "$plugin" "$autostart_file" "$built_for"
         rm -rf "$build_dir"
+        rmdir "$(dirname "$build_dir")" 2>/dev/null || true
         rmdir -p "$(dirname "$plugin")" 2>/dev/null || true
         remove_plugin_path
         remove_system_copy
