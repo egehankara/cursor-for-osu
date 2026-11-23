@@ -4,117 +4,113 @@
 
 # Cursor for osu!
 
-**Your osu! skin's cursor and cursor trail, on your whole Linux desktop.**
+**Your osu! skin's cursor and trail, on your whole Linux desktop.**
 
-GNOME and KDE Plasma · Wayland · 10 languages
+GNOME · KDE Plasma · Wayland
 
-[English](#english) · [Türkçe](#türkçe)
+**English** · [Türkçe](README.tr.md)
+
+<img src="data/screenshots/window-en.png" width="440" alt="The Cursor for osu! window with a list of skins">
 
 </div>
 
----
+Cursor for osu! takes the cursor from an osu! skin and makes it your mouse cursor everywhere on
+your Linux desktop: in your browser, your file manager, on the desktop itself. The **trail** behind
+it comes along too, so moving the mouse feels like it does in the game.
 
-## English
-
-<p align="center">
-  <img src="data/screenshots/window-en.png" width="440" alt="The Cursor for osu! window with a list of skins">
-</p>
-
-Drop in an `.osk` file and your desktop gets the skin's **cursor** and its **trail**, sized
-and faded like in osu!lazer. Skins you export from osu!lazer show up in the app by themselves.
+Add a skin's `.osk` file or folder to the app and **click it, that's all**. You don't need to unpack
+anything. The cursor has the same size as in osu!lazer and the trail fades the same way. Skins you
+export from osu!lazer show up in the app by themselves, so switching between them is one click.
+osu! doesn't need to be open, or even installed. When you want your old cursor back, one button
+puts it back.
 
 > [!IMPORTANT]
-> **Linux only.** You need **GNOME** or **KDE Plasma 6.6+**, both on **Wayland**.
-> Not sure which desktop you have? Run `echo $XDG_CURRENT_DESKTOP` in a terminal. It prints `GNOME` or `KDE`.
+> **Linux only.** You need **GNOME 51** or **KDE Plasma 6.6+**, on **Wayland**.
+> On an older GNOME the cursor still works, only the trail doesn't.
+>
+> Not sure what you have? Run these in a terminal:
+> - `echo $XDG_CURRENT_DESKTOP` prints `GNOME` or `KDE`.
+> - `echo $XDG_SESSION_TYPE` prints `wayland`. If it says `x11`, pick a Wayland session on the login screen.
+> - `gnome-shell --version` or `plasmashell --version` prints your version.
 
-KDE Plasma support by [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
-Cursor for osu! is a fan-made tool. It is **not made by or affiliated with ppy or osu!**.
+## Install
 
-**Contents:** [Install on GNOME](#install-on-gnome) · [Install on KDE Plasma](#install-on-kde-plasma) ·
-[Usage](#usage) · [Updating](#updating) · [Uninstalling](#uninstalling) · [How it works](#how-it-works)
+<details>
+<summary><b>New to the terminal?</b></summary>
 
-### New to the terminal?
+Open **Terminal** or **Console** on GNOME, **Konsole** on KDE Plasma. Copy a command, paste it
+with **Ctrl+Shift+V** and press **Enter**. Commands starting with `sudo` ask for your password,
+and nothing appears while you type it. That is normal.
 
-The install takes a few commands in a terminal. Open it from your applications: **Terminal** or
-**Console** on GNOME, **Konsole** on KDE Plasma.
+</details>
 
-- Copy a command, paste it with **Ctrl+Shift+V** and press **Enter**.
-- Commands that start with `sudo` ask for your password. **Nothing appears while you type it**, that is normal.
+### 1. Install the packages
 
-### Install on GNOME
+Open your distribution and run **only the command for your desktop**.
 
-The trail is made for **GNOME Shell 51**. The cursor works on any GNOME.
+<details>
+<summary><b>Arch, CachyOS, Manjaro</b></summary>
 
-**1. Install the packages.** Find your distribution below.
-
-> [!WARNING]
-> **Run only the command for your distribution, not all of them.**
-
-**Arch, CachyOS, Manjaro**
+GNOME:
 
 ```sh
 sudo pacman -S --needed git python python-pillow python-gobject libadwaita
 ```
 
-**Ubuntu, Debian**
-
-```sh
-sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
-```
-
-**Fedora**
-
-```sh
-sudo dnf install git python3 python3-pillow python3-gobject libadwaita
-```
-
-**openSUSE**
-
-```sh
-sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
-```
-
-**2. Download and install the app:**
-
-```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
-bash install.sh
-```
-
-**3. Log out and log back in once**, so GNOME loads the trail. ***GNOME KNOWS BEST.***
-
-Use the menu at the top right, or this command. **Save your open work first**, it logs out right away:
-
-```sh
-gnome-session-quit --logout --no-prompt
-```
-
-**4. Open Cursor for osu!** from your applications and pick a skin. Done!
-
-### Install on KDE Plasma
-
-On Plasma the trail is a small KWin effect that **you build on your computer** in step 3.
-It takes a minute.
-
-**1. Install the packages.** Find your distribution below.
-
-> [!WARNING]
-> **Run only the command for your distribution, not all of them.**
-
-**Arch, CachyOS, Manjaro**
+KDE Plasma:
 
 ```sh
 sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel vulkan-headers
 ```
 
-**Kubuntu**
+</details>
+
+<details>
+<summary><b>Ubuntu, Debian, Kubuntu</b></summary>
+
+GNOME:
+
+```sh
+sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
+```
+
+KDE Plasma (Kubuntu):
 
 ```sh
 sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1 plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
 ```
 
-**2. Download and install the app:**
+</details>
+
+<details>
+<summary><b>Fedora</b> (GNOME)</summary>
+
+```sh
+sudo dnf install git python3 python3-pillow python3-gobject libadwaita
+```
+
+</details>
+
+<details>
+<summary><b>openSUSE</b> (GNOME)</summary>
+
+```sh
+sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
+```
+
+</details>
+
+<details>
+<summary><b>KDE Plasma on Fedora, openSUSE or another distribution</b></summary>
+
+The trail on KDE Plasma was tested on Arch-based distributions and Kubuntu. Elsewhere it should
+work too: install the GNOME command of your distribution above (the app needs those on KDE too), plus **cmake**,
+**extra-cmake-modules**, a **C++ compiler** and the **KWin development files**. If something is
+missing, `install.sh` tells you, and the cursor works even without the trail.
+
+</details>
+
+### 2. Download and install the app
 
 ```sh
 git clone https://github.com/egehankara/cursor-for-osu.git
@@ -122,399 +118,141 @@ cd cursor-for-osu
 bash install.sh
 ```
 
-**3. Build and install the trail**, in the same terminal. Again, **only the commands for your distribution**:
+> [!TIP]
+> **Keep the `cursor-for-osu` folder.** Updates are made from it.
 
-**Arch, CachyOS, Manjaro**
+### 3. Turn on the trail
 
-```sh
-cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build build
-sudo cmake --install build
-```
+**On GNOME:** log out and log back in once. That's it.
 
-**Kubuntu**
+<details>
+<summary>Can't find the log out option on GNOME? Here is the terminal command. <b><i>GNOME KNOWS BEST.</i></b></summary>
 
 ```sh
-cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build build
-sudo cmake --install build
+gnome-session-quit
 ```
 
-**4. Log out and log back in once.**
+</details>
 
-**5. Turn the trail on:** open **System Settings → Desktop Effects** and enable **Cursor for osu! Trail**.
+**On KDE Plasma:** log out and log back in once. That's it. You don't need to build anything:
+`install.sh` in step 2 already built the trail for your Plasma and turned it on, that was the
+minute it took.
 
-**6. Open Cursor for osu!** from your applications and pick a skin. Done!
+### 4. Pick a skin
 
-> [!NOTE]
-> The cursor works even with the trail turned off. The trail was tested on CachyOS with Plasma 6
-> and builds with KWin 6.6 up to 6.8.
+Open **Cursor for osu!** from your applications and click a skin. Done!
 
-### Usage
+## Usage
 
-- **Add skins** with the **.osk** and **Folder** buttons, or **drag `.osk` files and skin folders onto the window**.
-- **Click a card to apply the skin.** The one in use has a pink frame.
-- **Change the size** with the slider, or click the number next to it and type one.
-- **Right-click a card** to rename the skin, open its folder or remove it. Removing the skin in use puts your previous cursor back.
+- **Add skins** with the **.osk** and **Folder** buttons, or drag them onto the window.
+- **Click a card** to apply it. **Right-click** to rename, open its folder or remove it.
+- **Change the size** with the slider, or click the number and type one.
+- **Settings** at the top holds the rest: the in-game size, keeping system cursors, watching
+  osu!lazer exports and the osu!lazer folder.
 
-**osu!lazer exports are added automatically.** While the app is open it watches the game's
-exports folder, and when it starts it catches up on exports made while it was closed. A skin
-you remove stays removed until you export it again.
+### Where do I get skins?
 
-Under **More settings** (the gear button at the top) you can:
+- **From osu!lazer:** open the skin settings in the game and use **Export selected skin**. The
+  app picks up the export by itself, you don't need to do anything else.
+- **From the internet:** players share their skins as `.osk` files, on the osu! forums and on
+  skin sites. Search for "osu! skins". Download the `.osk` and add it with the **.osk** button.
 
-- turn this off with **Watch osu! exports**,
-- add every export at once with **Add all**, removed skins included,
-- pick where osu!lazer keeps its files with **Change** next to **osu!lazer folder**.
+## Troubleshooting
+
+**The trail doesn't show up.**
+
+- Did you log out and back in after installing? The trail only starts after that.
+- **GNOME:** open the **Extensions** app and check that **Cursor for osu! Trail** is on. The
+  trail needs GNOME 51.
+- **KDE Plasma:** open **System Settings → Desktop Effects** and check that **Cursor for osu!
+  Trail** is on. If it isn't listed, run `bash install.sh` again in the `cursor-for-osu` folder
+  and read what it says.
+- **On an X11 session** there is no trail. Pick a Wayland session on the login screen.
+
+**The trail disappears sometimes.** That is on purpose: there is no trail over fullscreen
+windows, while an app hides the cursor, and, with **Keep system cursors** on, behind the text
+and resize cursors.
+
+## Updating
+
+The app tells you when a new version is out. Then run:
+
+```sh
+cd cursor-for-osu
+git pull
+bash install.sh
+```
+
+Log out and back in if it tells you to. On KDE Plasma the trail is rebuilt by itself after
+Plasma updates, at your next login, so keep the packages from step 1 installed.
+If you installed on KDE Plasma before the trail moved to your home folder, the first update asks
+for your password once, to remove the old copy from the system folder.
+
+## Uninstalling
+
+```sh
+cursor-for-osu uninstall               # add --keep-data to keep your skins and settings
+```
+
+Your previous cursor comes back and the trail is removed, on GNOME and KDE Plasma alike.
+The skin files you added from are never touched. After that you can delete the
+`cursor-for-osu` folder too.
+
+## More
+
+<details>
+<summary>How it works</summary>
+
+- **The cursor is a real cursor theme** generated from the skin, so it is the low-latency
+  hardware cursor. Its size matches the game, Screen Scaling included.
+- **The trail is drawn by the desktop**: a GNOME Shell extension (`extension/`) or a KWin
+  effect (`kwin/`). Fade times, spacing and blending come from osu!lazer's `CursorTrail` and
+  `LegacyCursorTrail`. It turns off over fullscreen windows and while an app hides the cursor.
+- **Keep system cursors** leaves the text, resize, move, not-allowed and crosshair cursors to
+  your previous theme, tinted in the skin's colours.
+- **Not supported:** `CursorExpand` (a cursor theme can't react to clicks) and spinning
+  `CursorRotate` skins, which are shown still.
+
+</details>
 
 <details>
 <summary>Command line</summary>
 
 ```sh
-cursor-for-osu apply skin.osk        # apply a skin
-cursor-for-osu size 1.2              # cursor size, 0.1 to 2.0 like in the game
-cursor-for-osu reset                 # go back to the previous cursor
+cursor-for-osu apply skin.osk   # apply a skin
+cursor-for-osu size 1.2         # 0.1 to 2.0, like in the game
+cursor-for-osu reset            # back to the previous cursor
 cursor-for-osu status
-cursor-for-osu uninstall
 ```
 
 </details>
-
-### Updating
-
-**The app tells you when a new version is out.** It asks GitHub once a day, and if there is
-one, a bar appears at the top of the window. **How to update** shows these commands with your
-folder filled in:
-
-```sh
-cd cursor-for-osu
-git pull
-bash install.sh
-```
-
-> [!IMPORTANT]
-> **On KDE Plasma**, also run the three commands of step 3 again and log out and back in.
-> **Do this after every Plasma update too**, or the trail stops loading.
-
-Don't want the reminders? Pick **Not now**, then **No**. You can turn them back on in the About window.
-
-### Uninstalling
-
-```sh
-cursor-for-osu uninstall               # or: bash uninstall.sh
-cursor-for-osu uninstall --keep-data   # keep the skin list and settings for a later install
-```
-
-This **puts your previous cursor back**, turns the trail off and removes the app, the extension
-and the cursor themes it made. **The skin files you added from are never touched.**
 
 <details>
-<summary>Removing the KWin trail on Plasma</summary>
+<summary>Languages</summary>
 
-Run the uninstall command from the Plasma Wayland session. Then disable **Cursor for osu! Trail**
-in Desktop Effects and remove the module:
-
-```sh
-# Arch, CachyOS, Manjaro
-sudo rm -- "$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
-# Kubuntu
-sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
-```
+The app follows your desktop language: English, Türkçe, Español, Português (Brasil), Deutsch,
+Français, Русский, Polski, 日本語 and 简体中文. Start it in another one with
+`LANGUAGE=de cursor-for-osu`. Translations are in `osu_cursor/locale/`.
 
 </details>
 
-### Languages
-
-The app follows your desktop language: **English, Türkçe, Español, Português (Brasil), Deutsch,
-Français, Русский, Polski, 日本語 and 简体中文**. To start it in another one:
-`LANGUAGE=de cursor-for-osu`.
-
-Translations live in `osu_cursor/locale/`, one JSON file per language that maps the English text
-to the translated one. `python3 -m pytest` checks that every text has a translation.
-
-### How it works
-
-- **The cursor is a real cursor theme**, an Xcursor theme generated from the skin, so you get the
-  low-latency hardware cursor. Its size matches the game: it comes from the slider in the app, or
-  from osu!lazer if you haven't set it, and the game's Screen Scaling is taken into account.
-- **The trail is drawn by the desktop**: the GNOME Shell extension in `extension/` or the KWin
-  effect in `kwin/`. Fade times, part spacing and blending come from osu!lazer's `CursorTrail`
-  and `LegacyCursorTrail`. The trail turns off over fullscreen windows and while an app hides the cursor.
-- **Every cursor shape shows the skin cursor.** With **Keep system cursors** on, the text, resize,
-  move, not-allowed and crosshair cursors come from your previous cursor theme, tinted with the skin
-  cursor's colours so they stay visible on any background. The trail is not drawn behind them.
-- Each skin is kept in its own folder under `~/.local/share/osu-cursor/skins`. Only the cursor
-  files (`cursor`, `cursormiddle`, `cursortrail`, with their `@2x` versions) and `skin.ini` are copied.
-
-**Not supported:** growing the cursor on click (`CursorExpand`), because a cursor theme can't react
-to clicks. Spinning skins (`CursorRotate`) are shown still, because animated cursors on GNOME stall
-when switching skins and jump when the cursor shape changes.
-
-### Contributing and tests
+<details>
+<summary>Contributing and tests</summary>
 
 ```sh
 python3 -m pytest
-ctest --test-dir build --output-on-failure   # KWin trail, after building it
+cmake -S kwin -B build && cmake --build build   # KWin trail and its tests
+ctest --test-dir build --output-on-failure
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to work on the app.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### License
-
-[MIT License](LICENSE). The trail behaviour is adapted from the MIT licensed
-[osu!](https://github.com/ppy/osu) code (Copyright (c) ppy Pty Ltd), its notice is in
-[THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES). **Skin images must not be added to this repository**,
-they belong to their creators.
+</details>
 
 ---
 
-## Türkçe
-
-<p align="center">
-  <img src="data/screenshots/window-tr.png" width="440" alt="Skin listesiyle Cursor for osu! penceresi">
-</p>
-
-Bir `.osk` dosyası ekle, masaüstün skin'in **imlecini** ve **trail'ini** osu!lazer'deki boyut ve
-solmayla kullansın. osu!lazer'dan export ettiğin skin'ler uygulamaya kendiliğinden gelir.
-
-> [!IMPORTANT]
-> **Sadece Linux.** **GNOME** veya **KDE Plasma 6.6+** gerekir, ikisi de **Wayland** oturumunda.
-> Hangi masaüstünü kullandığından emin değil misin? Terminalde `echo $XDG_CURRENT_DESKTOP` çalıştır. `GNOME` veya `KDE` yazar.
-
-KDE Plasma desteği: [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
-Cursor for osu! hayran yapımı bir araçtır. **ppy veya osu! tarafından yapılmamıştır ve onlarla bağlantılı değildir.**
-
-**İçindekiler:** [GNOME'da kurulum](#gnomeda-kurulum) · [KDE Plasma'da kurulum](#kde-plasmada-kurulum) ·
-[Kullanım](#kullanım) · [Güncelleme](#güncelleme) · [Kaldırma](#kaldırma) · [Nasıl çalışır](#nasıl-çalışır)
-
-### Terminale yeni misin?
-
-Kurulum, terminalde birkaç komuttan oluşur. Terminali uygulamalarından aç: GNOME'da **Terminal**
-veya **Konsol**, KDE Plasma'da **Konsole**.
-
-- Bir komutu kopyala, **Ctrl+Shift+V** ile yapıştır ve **Enter**'a bas.
-- `sudo` ile başlayan komutlar şifreni sorar. **Şifreni yazarken ekranda hiçbir şey görünmez**, bu normal.
-
-### GNOME'da kurulum
-
-Trail **GNOME Shell 51** için yapıldı. İmleç her GNOME'da çalışır.
-
-**1. Paketleri kur.** Aşağıda dağıtımını bul.
-
-> [!WARNING]
-> **Sadece kendi dağıtımının komutunu çalıştır, hepsini değil.**
-
-**Arch, CachyOS, Manjaro**
-
-```sh
-sudo pacman -S --needed git python python-pillow python-gobject libadwaita
-```
-
-**Ubuntu, Debian**
-
-```sh
-sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1
-```
-
-**Fedora**
-
-```sh
-sudo dnf install git python3 python3-pillow python3-gobject libadwaita
-```
-
-**openSUSE**
-
-```sh
-sudo zypper install git python3 python3-Pillow python3-gobject typelib-1_0-Adw-1
-```
-
-**2. Uygulamayı indir ve kur:**
-
-```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
-bash install.sh
-```
-
-**3. Bir kez oturumu kapatıp tekrar aç**, GNOME trail'i böyle yükler. ***GNOME KNOWS BEST.***
-
-Sağ üstteki menüyü ya da bu komutu kullan. **Önce açık işlerini kaydet**, hemen oturumu kapatır:
-
-```sh
-gnome-session-quit --logout --no-prompt
-```
-
-**4. Uygulamalarından Cursor for osu!'yu aç** ve bir skin seç. Bu kadar!
-
-### KDE Plasma'da kurulum
-
-Plasma'da trail küçük bir KWin efektidir ve 3. adımda **onu kendi bilgisayarında derlersin**.
-Bir dakika sürer.
-
-**1. Paketleri kur.** Aşağıda dağıtımını bul.
-
-> [!WARNING]
-> **Sadece kendi dağıtımının komutunu çalıştır, hepsini değil.**
-
-**Arch, CachyOS, Manjaro**
-
-```sh
-sudo pacman -S --needed git python python-pillow python-gobject libadwaita plasma-workspace libkscreen kwin extra-cmake-modules cmake base-devel vulkan-headers
-```
-
-**Kubuntu**
-
-```sh
-sudo apt install git python3 python3-pil python3-gi gir1.2-adw-1 plasma-workspace libkscreen-bin kwin-dev extra-cmake-modules cmake g++ pkgconf libwayland-dev libdrm-dev
-```
-
-**2. Uygulamayı indir ve kur:**
-
-```sh
-git clone https://github.com/egehankara/cursor-for-osu.git
-cd cursor-for-osu
-bash install.sh
-```
-
-**3. Aynı terminalde trail'i derle ve kur.** Yine **sadece kendi dağıtımının komutlarını** çalıştır:
-
-**Arch, CachyOS, Manjaro**
-
-```sh
-cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build build
-sudo cmake --install build
-```
-
-**Kubuntu**
-
-```sh
-cmake -S kwin -B build -DKDE_INSTALL_PLUGINDIR="$(qtpaths6 --query QT_INSTALL_PLUGINS)"
-cmake --build build
-sudo cmake --install build
-```
-
-**4. Bir kez oturumu kapatıp tekrar aç.**
-
-**5. Trail'i aç:** **Sistem Ayarları → Masaüstü Efektleri**'ne gir ve **osu! İmleç İzi**'ni etkinleştir.
-
-**6. Uygulamalarından Cursor for osu!'yu aç** ve bir skin seç. Bu kadar!
-
-> [!NOTE]
-> Trail kapalıyken de imleç çalışır. Trail CachyOS'ta Plasma 6 ile test edildi ve KWin 6.6'dan
-> 6.8'e kadar derlenir.
-
-### Kullanım
-
-- **Skin eklemek için** **.osk** ve **Klasör** düğmelerini kullan ya da **`.osk` dosyalarını ve skin klasörlerini pencereye sürükle**.
-- **Uygulamak için bir karta tıkla.** Kullandığın skin pembe çerçeveli olur.
-- **Boyutu** kaydırıcıyla ayarla ya da yanındaki sayıya tıklayıp yaz.
-- **Bir karta sağ tıklayarak** skin'in adını değiştir, klasörünü aç veya onu kaldır. Kullandığın skin'i kaldırınca önceki imlecine dönersin.
-
-**osu!lazer export'ları kendiliğinden eklenir.** Uygulama açıkken oyunun exports klasörünü
-izler, açılınca da kapalıyken yapılan export'ları ekler. Listeden kaldırdığın bir skin, tekrar
-export etmedikçe geri gelmez.
-
-Üstteki ⚙ düğmesiyle açılan **Diğer ayarlar** altında:
-
-- **osu! export'larını izle** ile bunu kapatabilir,
-- **Tümünü ekle** ile kaldırdıkların dahil bütün export'ları bir kerede ekleyebilir,
-- **osu!lazer klasörü** satırındaki **Değiştir** ile oyunun dosyalarının yerini seçebilirsin.
-
-<details>
-<summary>Komut satırı</summary>
-
-```sh
-cursor-for-osu apply skin.osk        # skin'i uygula
-cursor-for-osu size 1.2              # imleç boyutu, oyundaki gibi 0.1 ile 2.0 arası
-cursor-for-osu reset                 # önceki imlece dön
-cursor-for-osu status
-cursor-for-osu uninstall
-```
-
-</details>
-
-### Güncelleme
-
-**Yeni sürüm çıkınca uygulama haber verir.** Günde bir kez GitHub'a sorar, yeni sürüm varsa
-pencerenin üstünde bir şerit belirir. **Nasıl güncellenir?** düğmesi bu komutları senin
-klasörünle birlikte gösterir:
-
-```sh
-cd cursor-for-osu
-git pull
-bash install.sh
-```
-
-> [!IMPORTANT]
-> **KDE Plasma'da** 3. adımdaki üç komutu da tekrar çalıştır ve bir kez oturumu kapatıp aç.
-> **Her Plasma güncellemesinden sonra da bunu yap**, yoksa trail yüklenmez.
-
-Hatırlatma istemiyor musun? **Şimdi değil**, sonra **Hayır** de. Hakkında penceresinden tekrar açabilirsin.
-
-### Kaldırma
-
-```sh
-cursor-for-osu uninstall               # veya: bash uninstall.sh
-cursor-for-osu uninstall --keep-data   # skin listesini ve ayarları sonraki kurulum için sakla
-```
-
-**Önceki imlecini geri getirir**, trail'i kapatır, uygulamayı, eklentiyi ve oluşturduğu imleç
-temalarını siler. **Skin eklerken seçtiğin dosyalara hiçbir zaman dokunulmaz.**
-
-<details>
-<summary>Plasma'da KWin trail'ini kaldırma</summary>
-
-Kaldırma komutunu Plasma Wayland oturumunda çalıştır. Sonra Masaüstü Efektleri'nden
-**osu! İmleç İzi**'ni kapat ve modülü sil:
-
-```sh
-# Arch, CachyOS, Manjaro
-sudo rm -- "$(/usr/lib/qt6/bin/qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
-# Kubuntu
-sudo rm -- "$(qtpaths6 --query QT_INSTALL_PLUGINS)/kwin/effects/plugins/osu-cursor-trail.so"
-```
-
-</details>
-
-### Diller
-
-Uygulama masaüstünün dilini kullanır: **English, Türkçe, Español, Português (Brasil), Deutsch,
-Français, Русский, Polski, 日本語 ve 简体中文**. Başka bir dilde açmak için:
-`LANGUAGE=de cursor-for-osu`.
-
-Çeviriler `osu_cursor/locale/` altında, her dil için İngilizce metni çevirisiyle eşleyen bir JSON
-dosyasıdır. `python3 -m pytest` her metnin çevrildiğini kontrol eder.
-
-### Nasıl çalışır
-
-- **İmleç gerçek bir imleç temasıdır**, skin'den üretilen bir Xcursor teması, böylece gecikmesiz
-  donanım imleci kullanılır. Boyutu oyundakiyle aynıdır: uygulamadaki kaydırıcıdan, ayarlanmadıysa
-  osu!lazer'den gelir. Oyundaki ekran ölçekleme (Screen Scaling) ayarı da hesaba katılır.
-- **Trail'i masaüstü çizer**: `extension/` altındaki GNOME Shell eklentisi ya da `kwin/` altındaki
-  KWin efekti. Solma süreleri, parça aralığı ve karışım modu osu!lazer'in `CursorTrail` ve
-  `LegacyCursorTrail` kodundan alınmıştır. Tam ekran pencerelerde ve bir uygulama imleci gizlediğinde trail kapanır.
-- **Bütün imleç şekilleri skin imlecini gösterir.** **Sistem imleçlerini koru** açıksa yazı,
-  boyutlandırma, taşıma, yasak ve artı imleçleri önceki imleç temandan alınır ve skin imlecinin
-  renklerine boyanır, böylece her arka planda görünürler. Bunların arkasında trail çizilmez.
-- Eklenen her skin `~/.local/share/osu-cursor/skins` altında kendi klasöründe tutulur. Sadece imleç
-  dosyaları (`cursor`, `cursormiddle`, `cursortrail`, `@2x` sürümleriyle) ve `skin.ini` kopyalanır.
-
-**Desteklenmeyenler:** tıklayınca imlecin büyümesi (`CursorExpand`), çünkü imleç teması tıklamaya
-tepki veremez. Dönen skin'ler (`CursorRotate`) sabit gösterilir, çünkü GNOME'da animasyonlu
-imleçler skin değişiminde takılıyor ve imleç şekli değişince açısı atlıyor.
-
-### Katkı ve testler
-
-```sh
-python3 -m pytest
-ctest --test-dir build --output-on-failure   # KWin trail'i, derledikten sonra
-```
-
-Uygulama üzerinde nasıl çalışılacağı [CONTRIBUTING.md](CONTRIBUTING.md#türkçe) dosyasında.
-
-### Lisans
-
-[MIT Lisansı](LICENSE). Trail davranışı MIT lisanslı [osu!](https://github.com/ppy/osu) kodundan
-uyarlanmıştır (Copyright (c) ppy Pty Ltd), lisans notu [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES)
-dosyasındadır. **Skin görselleri bu repoya konmamalıdır**, hakları yapımcılarına aittir.
+KDE Plasma support by [@MehmetAkifUgur](https://github.com/MehmetAkifUgur).
+A fan-made tool, **not made by or affiliated with ppy or osu!**.
+[MIT License](LICENSE). The trail behaviour is adapted from [osu!](https://github.com/ppy/osu)
+(MIT, Copyright (c) ppy Pty Ltd), see [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES).
+Skin images must not be added to this repository, they belong to their creators.
